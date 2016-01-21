@@ -45,10 +45,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Constants.cs" />
+    <Compile Include="Packet\IPayload.cs" />
+    <Compile Include="Packet\PlayerAppearanceData.cs" />
+    <Compile Include="Packet\TerrColor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TerrListener.cs" />
-    <Compile Include="TerrPacket.cs" />
-    <Compile Include="TerrPacketType.cs" />
+    <Compile Include="Packet\TerrPacket.cs" />
+    <Compile Include="Packet\TerrPacketType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Text;
 
-namespace TerrariaBridge
+namespace TerrariaBridge.Packet
 {
     public class TerrPacket
     {
