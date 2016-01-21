@@ -47,9 +47,6 @@ namespace TerrariaBridge.Packet
             return retval;
         }
 
-        //public static byte[] Create(TerrPacketType type, string stingPayload)
-        //    => Create(type, Encoding.ASCII.GetBytes(stingPayload));
-
         /// <summary>
         /// Creates bytes that represent a terraria client -> server (with payload) packet.
         /// </summary>
@@ -93,10 +90,6 @@ namespace TerrariaBridge.Packet
 
             //set the type
             packet[Index_PacketId] = (byte)type;
-
-            if (type == TerrPacketType.ConnectRequest)
-                //ConenctRequest type packets always have their third byte set to 0x0b
-                packet[3] = 0x0b;
 
             return packet;
         }

@@ -100,7 +100,6 @@ namespace TerrariaBridge
                 _playerId,
                 0xff, 0xff, //spawn x (int16)
                 0xff, 0xff //spawn y (int16)
-                //0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff // starts in player id
             }));
         }
 
@@ -120,8 +119,8 @@ namespace TerrariaBridge
                 case TerrPacketType.ChatMessage:
                     Console.WriteLine($"Chat message: {Encoding.ASCII.GetString(packet.Payload)}");
                     break;
+                    // todo: send keepalives
             }
-            // todo: send keepalives
         }
 
         public async Task Start()
