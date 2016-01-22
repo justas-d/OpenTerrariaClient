@@ -59,6 +59,7 @@
     <Compile Include="Packet\TerrPacketType.cs" />
     <Compile Include="TerrListener.Events.cs" />
     <Compile Include="TerrListenerConfig.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

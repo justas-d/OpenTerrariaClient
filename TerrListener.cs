@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TerrariaBridge.Packet;
@@ -9,6 +10,8 @@ namespace TerrariaBridge
 {
     public partial class TerrariaLisener : IDisposable
     {
+        public const string TerrariaVersion = "Terraria156";
+
         private Socket Socket { get; } = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private readonly ManualResetEvent _disconnectEvent = new ManualResetEvent(false);
 
@@ -24,10 +27,10 @@ namespace TerrariaBridge
             Config.Lock();
         }
 
-        public void ConnectAndLogin(string host, int port)
+        public void ConnectAndLogin(string host, int port, string password = null)
         {
             Connect(host, port);
-            Login();
+            Login(password);
         }
 
         public void Connect(string host, int port)
@@ -52,7 +55,7 @@ namespace TerrariaBridge
             BeginReceive();
         }
 
-        public void Login()
+        public void Login(string password = null)
         {
             if (!Socket.Connected)
                 throw new InvalidOperationException("You first need to connect to the server if you want to login.");
@@ -60,16 +63,18 @@ namespace TerrariaBridge
             if (_isLoggingIn) throw new InvalidOperationException("You cannot try to log in when already trying to log in.");
 
             _isLoggingIn = true;
-            OnLoggedIn();
+
+            LoggedIn += (s, e) => PlayerId = e.PlayerId;
 
             PacketReceived += (s, e) =>
             {
                 // login data
                 if (_isLoggingIn && e.Packet.Type == TerrPacketType.ContinueConnecting)
                 {
-                    PlayerId = e.Packet.Payload[0];
+                    OnLoggedIn(e.Packet.Payload[0]);
                     Task.Run(() => SendLoginPackets());
                 }
+                // item owner sync
                 if (e.Packet.Type == TerrPacketType.RemoveItemOwner)
                 {
                     byte[] payload = new byte[sizeof(short) + 1];
@@ -83,9 +88,25 @@ namespace TerrariaBridge
                     // send an update item owner sync packet with the item id from the remove owner packet and a player id of 0xff.
                     Send(TerrPacket.Create(TerrPacketType.UpdateItemOwner, payload));
                 }
+                // disconnect packet
+                if (e.Packet.Type == TerrPacketType.Disconnect)
+                {
+                    // terraria transfers its strings prefixed with a length.
+                    //we don't need that length so lets get rid of it here.
+                    byte[] stringData = new byte[e.Packet.Payload.Length - 1];
+                    Buffer.BlockCopy(e.Packet.Payload, 1, stringData, 0, stringData.Length);
+                    SetDisconnectState(Encoding.ASCII.GetString(stringData));
+                }
+                if (e.Packet.Type == TerrPacketType.RequestPassword)
+                {
+                    if(string.IsNullOrEmpty(password))
+                        throw new ArgumentNullException(password);
+
+                    Send(TerrPacket.Create(TerrPacketType.SendPassword, Utils.EncodeTerrString(password)));
+                }
             };
 
-            Send(TerrPacket.ConnectPacket);
+            Send(TerrPacket.Create(TerrPacketType.ConnectRequest, Utils.EncodeTerrString(TerrariaVersion)));
         }
 
         private void SendLoginPackets()
@@ -120,10 +141,11 @@ namespace TerrariaBridge
                 byte[] buffer = new byte[Constants.BufferSize];
                 Socket.BeginReceive(buffer, 0, Constants.BufferSize, 0, ReceivePackets, buffer);
             }
-            catch
+            catch(SocketException ex)
             {
-                Disconnect();
+                SetDisconnectState($"SocketException: {ex}");
             }
+            catch (ObjectDisposedException) { }
         }
 
         private void ReceivePackets(IAsyncResult ar)
@@ -147,10 +169,11 @@ namespace TerrariaBridge
 
                 BeginReceive();
             }
-            catch (Exception ex)
+            catch (SocketException ex)
             {
-                Console.WriteLine($"Exception when receiving packet: {ex}");
+                SetDisconnectState($"SocketException: {ex}");
             }
+            catch (ObjectDisposedException) { }
         }
 
         ///<summary> Disconnects from the currently connected terraria server, allowing you to reuse this listener.</summary>
@@ -159,9 +182,14 @@ namespace TerrariaBridge
             if (!Socket.Connected)
                 throw new InvalidOperationException("You must be connected to a server to disconnect from it.");
 
-            _disconnectEvent.Set();
-            OnDisconnected();
             Socket.Disconnect(true);
+            SetDisconnectState("Disconnect() called.");
+        }
+
+        private void SetDisconnectState(string reason)
+        {
+            _disconnectEvent.Set();
+            OnDisconnected(reason);
             IsLoggedIn = false;
         }
 
@@ -171,9 +199,17 @@ namespace TerrariaBridge
         ///<summary> Sends data to the connected server.</summary>
         public void Send(byte[] data)
         {
-            if (!Socket.Connected)
-                throw new InvalidOperationException("You must be connected to a server to send data to it.");
-            Socket.BeginSend(data, 0, data.Length, 0, (ar) => Socket.EndSend(ar), null);
+            try
+            {
+                if (!Socket.Connected)
+                    throw new InvalidOperationException("You must be connected to a server to send data to it.");
+                Socket.BeginSend(data, 0, data.Length, 0, (ar) => Socket.EndSend(ar), null);
+            }
+            catch (SocketException ex)
+            {
+                SetDisconnectState($"SocketException: {ex}");
+            }
+            catch (ObjectDisposedException) { }
         }
 
         public void Dispose() => Socket.Dispose();

@@ -83,7 +83,7 @@
         PlaceObject = 79,
         SyncPlayerChestIndex = 80,
         CreateCombatText = 81,
-        LoadNetModule = 82,
+        NetModuleLiquidData = 82,
         SetNpcKillCount = 83,
         SetPlayerStealth = 84,
         ForceItemIntoNearestChest = 85,

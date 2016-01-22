@@ -20,11 +20,6 @@ namespace TerrariaBridge.Packet
 
         }
 
-        /// <summary>
-        /// Gets a connect packet for Terraria156
-        /// </summary>
-        public static byte[] ConnectPacket => new byte[] { 0x0f, 0x00, 0x01, 0x0b, 0x54, 0x65, 0x72, 0x72, 0x61, 0x72, 0x69, 0x61, 0x31, 0x35, 0x36 };
-
         public static TerrPacket Parse(byte[] data)
         {
             byte size = data[Index_Length];
