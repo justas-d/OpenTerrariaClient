@@ -1,7 +1,7 @@
 ﻿namespace TerrariaBridge
 {
-    public class Constants
+    public static class Constants
     {
-        public static int BufferSize = 0x1FFFE;
+        public const int BufferSize = 0x1FFFE;
     }
 }

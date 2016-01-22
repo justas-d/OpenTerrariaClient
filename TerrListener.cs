@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TerrariaBridge.Packet;
 
@@ -10,13 +11,15 @@ namespace TerrariaBridge
     public class TerrariaLisener : IDisposable
     {
         private Socket Socket { get; } = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
         private string Host { get; }
         private int Port { get; }
 
-        private bool _canReceive = true;
+        private ManualResetEvent _disconnectEvent = new ManualResetEvent(false);
 
         private byte _playerId;
+
+        private int _timeoutMs = 5000;
+
         private PlayerAppearanceData Appearance => new PlayerAppearanceData
         {
             SkinVarient = 0,
@@ -103,15 +106,9 @@ namespace TerrariaBridge
                 0xff, 0xff, //spawn x (int16)
                 0xff, 0xff //spawn y (int16)
             }));
-
-            //Task.Run(async () =>
-            //{
-            //    await Task.Delay(5000);
-            //
-            // });
         }
 
-        private async Task OnReceivePacket(TerrPacket packet)
+        private void OnReceivePacket(TerrPacket packet)
         {
             if (packet == null) return;
 
@@ -133,60 +130,80 @@ namespace TerrariaBridge
                     Console.WriteLine(
                         $"World info:\r\nName: {_worldInfo.WorldName}\r\nSpawn X: {_worldInfo.SpawnX}\r\nSpawn Y: {_worldInfo.SpawnY}");
                     break;
+                case TerrPacketType.Disconnect:
+                    Disconnect();
+                    break;
             }
         }
 
-        public async Task Start()
+        public void Start()
         {
-            Socket.BeginConnect(Host, Port, (ar) => Socket.EndConnect(ar), null);
+            ManualResetEvent connectDone = new ManualResetEvent(false);
 
-            while (!Socket.Connected) await Task.Delay(100);
-            Console.WriteLine($"Socket connected to {Socket.RemoteEndPoint}");
-
-            Send(TerrPacket.ConnectPacket);
-
-            while (true)
+            Socket.BeginConnect(Host, Port, (ar) =>
             {
-                if (!_canReceive)
-                    await Task.Delay(100);
-                else
-                    Receive();
-            }
-        }
+                Socket.EndConnect(ar);
+                connectDone.Set();
+            }, null);
 
-        private void Receive()
-        {
-            byte[] buffer = new byte[Constants.BufferSize];
+            connectDone.WaitOne(_timeoutMs);
 
-            _canReceive = false;
-            Socket.BeginReceive(buffer, 0, Constants.BufferSize, 0, ReceiveCallback, buffer);
-        }
-
-        private void ReceiveCallback(IAsyncResult ar)
-        {
-            int bytesRead = Socket.EndReceive(ar);
-
-            if (bytesRead <= 0)
+            if (!Socket.Connected)
             {
-                _canReceive = true;
+                Console.WriteLine($"Failed connecting to {Host}:{Port}");
                 return;
             }
+
+            Console.WriteLine($"Connected to {Socket.RemoteEndPoint}");
+
+            Send(TerrPacket.ConnectPacket);
+            BeginReceive();
+        }
+
+        private void BeginReceive()
+        {
+            try
+            {
+                if (!Socket.Connected) return;
+
+                byte[] buffer = new byte[Constants.BufferSize];
+                Socket.BeginReceive(buffer, 0, Constants.BufferSize, 0, ReceivePackets, buffer);
+            }
+            catch { }
+        }
+
+        private void ReceivePackets(IAsyncResult ar)
+        {
+            BeginReceive();
+
+            int bytesRead = Socket.EndReceive(ar);
+            if (bytesRead <= 0) return;
 
             byte[] data = new byte[bytesRead];
             Array.Copy((byte[]) ar.AsyncState, data, bytesRead);
 
-            Task.Run(async () => await OnReceivePacket(TerrPacket.Parse(data)));
-            _canReceive = true;
+            Task.Run(() => OnReceivePacket(TerrPacket.Parse(data)));
         }
 
-        private void Send(byte[] data)
+        public void Disconnect()
         {
-            Socket.BeginSend(data, 0, data.Length, 0, (ar) => Socket.EndSend(ar), null);
+            _disconnectEvent.Set();
+            Socket.Disconnect(true);
+            Console.WriteLine("Disconnected");
         }
 
-        public void Dispose()
+        /// <summary> Blocking call that will execute the provided async method and wait until the client has disconnected.</summary>
+        public void ExecuteAndWait(Func<Task> task)
         {
-            Socket.Dispose();
+            task().GetAwaiter().GetResult();
+            Wait();
         }
+
+        ///<summary> Blocking call and wait until the client has disconnected.</summary>
+        public void Wait() => _disconnectEvent.WaitOne();
+
+        private void Send(byte[] data) => Socket.BeginSend(data, 0, data.Length, 0, (ar) => Socket.EndSend(ar), null);
+
+        public void Dispose() => Socket.Dispose();
     }
 }
