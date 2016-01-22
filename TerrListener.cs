@@ -36,6 +36,8 @@ namespace TerrariaBridge
             Difficulty = 0
         };
 
+        private WorldInfoData _worldInfo;
+
         public TerrariaLisener(string host, int port)
         {
             Host = host;
@@ -101,13 +103,19 @@ namespace TerrariaBridge
                 0xff, 0xff, //spawn x (int16)
                 0xff, 0xff //spawn y (int16)
             }));
+
+            //Task.Run(async () =>
+            //{
+            //    await Task.Delay(5000);
+            //
+            // });
         }
 
         private async Task OnReceivePacket(TerrPacket packet)
         {
             if (packet == null) return;
 
-            //Console.WriteLine($"Received {packet.Type} of length {packet.Length}");
+            Console.WriteLine($"Received {packet.Type} of length {packet.Length}");
 
             switch (packet.Type)
             {
@@ -119,7 +127,12 @@ namespace TerrariaBridge
                 case TerrPacketType.ChatMessage:
                     Console.WriteLine($"Chat message: {Encoding.ASCII.GetString(packet.Payload)}");
                     break;
-                    // todo: send keepalives
+                // todo: send keepalives
+                case TerrPacketType.WorldInformation:
+                    _worldInfo = new WorldInfoData(packet);
+                    Console.WriteLine(
+                        $"World info:\r\nName: {_worldInfo.WorldName}\r\nSpawn X: {_worldInfo.SpawnX}\r\nSpawn Y: {_worldInfo.SpawnY}");
+                    break;
             }
         }
 
