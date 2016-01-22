@@ -71,6 +71,7 @@ namespace TerrariaBridge.Packet
                     RockLayer = reader.ReadInt16();
                     WorldId = reader.ReadInt32();
                     WorldName = reader.ReadString();
+                    MoonType = reader.ReadByte();
                     TreeBackground = reader.ReadByte();
                     CorruptionBackground = reader.ReadByte();
                     JungleBackground = reader.ReadByte();
