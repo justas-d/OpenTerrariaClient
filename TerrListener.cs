@@ -18,7 +18,7 @@ namespace TerrariaBridge
 
         public byte PlayerId { get; private set; }
 
-        public TerrariaLisener(TerrListenerConfig config)
+        public TerrariaLisener(TerrListenerConfig config = null)
         {
             Config = config ?? new TerrListenerConfig();
             Config.Lock();
@@ -32,6 +32,10 @@ namespace TerrariaBridge
 
         public void Connect(string host, int port)
         {
+            if(Socket.Connected) throw new ArgumentException("You are already connected to a server.");
+
+            _disconnectEvent.Reset();
+
             ManualResetEvent connectDone = new ManualResetEvent(false);
 
             Socket.BeginConnect(host, port, (ar) =>
@@ -53,10 +57,34 @@ namespace TerrariaBridge
             if (!Socket.Connected)
                 throw new InvalidOperationException("You first need to connect to the server if you want to login.");
             if (IsLoggedIn) throw new InvalidOperationException("You cannot log into a server two times.");
-            if (_isLoggingIn) throw new InvalidOperationException("You cannot try to log in when trying to log in.");
+            if (_isLoggingIn) throw new InvalidOperationException("You cannot try to log in when already trying to log in.");
 
             _isLoggingIn = true;
             OnLoggedIn();
+
+            PacketReceived += (s, e) =>
+            {
+                // login data
+                if (_isLoggingIn && e.Packet.Type == TerrPacketType.ContinueConnecting)
+                {
+                    PlayerId = e.Packet.Payload[0];
+                    Task.Run(() => SendLoginPackets());
+                }
+                if (e.Packet.Type == TerrPacketType.RemoveItemOwner)
+                {
+                    byte[] payload = new byte[sizeof(short) + 1];
+
+                    // copy over the item id from the remove item owner packet.
+                    Buffer.BlockCopy(e.Packet.Payload, 0, payload, 0, sizeof (short));
+
+                    // set pid
+                    payload[sizeof (short)] = 0xff;
+
+                    // send an update item owner sync packet with the item id from the remove owner packet and a player id of 0xff.
+                    Send(TerrPacket.Create(TerrPacketType.UpdateItemOwner, payload));
+                }
+            };
+
             Send(TerrPacket.ConnectPacket);
         }
 
@@ -112,14 +140,7 @@ namespace TerrariaBridge
                     TerrPacket packet = TerrPacket.Parse(data);
 
                     if (packet != null)
-                    {
-                        if (_isLoggingIn && packet.Type == TerrPacketType.ContinueConnecting)
-                        {
-                            PlayerId = packet.Payload[0];
-                            Task.Run(() => SendLoginPackets());
-                        }
                         Task.Run(() => OnPacketReceived(packet));
-                    }
                 }
                 else
                     Disconnect();
