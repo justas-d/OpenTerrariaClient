@@ -1,96 +1,70 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge
 {
-    public class TerrariaLisener : IDisposable
+    public partial class TerrariaLisener : IDisposable
     {
         private Socket Socket { get; } = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        private string Host { get; }
-        private int Port { get; }
+        private readonly ManualResetEvent _disconnectEvent = new ManualResetEvent(false);
 
-        private ManualResetEvent _disconnectEvent = new ManualResetEvent(false);
+        public TerrListenerConfig Config { get; }
+        public bool IsLoggedIn { get; private set; }
+        private bool _isLoggingIn;
 
-        private byte _playerId;
+        public byte PlayerId { get; private set; }
 
-        private int _timeoutMs = 5000;
-
-        private PlayerAppearanceData Appearance => new PlayerAppearanceData
+        public TerrariaLisener(TerrListenerConfig config)
         {
-            SkinVarient = 0,
-            Hair = 0,
-            Name = "Artificial Client",
-            HairDye = 0,
-            HideVisuals1 = 0,
-            HideVisuals2 = 0,
-            HideMisc = 0,
-            HairColor = new TerrColor(0, 0, 0),
-            SkinColor = new TerrColor(0, 0, 0),
-            EyeColor = new TerrColor(0, 0, 0),
-            ShirtColor = new TerrColor(0, 0, 0),
-            UnderShirtColor = new TerrColor(0, 0, 0),
-            PantsColor = new TerrColor(0, 0, 0),
-            ShoeColor = new TerrColor(0, 0, 0),
-            Difficulty = 0
-        };
+            Config = config ?? new TerrListenerConfig();
+            Config.Lock();
+        }
 
-        private WorldInfoData _worldInfo;
-
-        public TerrariaLisener(string host, int port)
+        public void ConnectAndLogin(string host, int port)
         {
-            Host = host;
-            Port = port;
+            Connect(host, port);
+            Login();
+        }
+
+        public void Connect(string host, int port)
+        {
+            ManualResetEvent connectDone = new ManualResetEvent(false);
+
+            Socket.BeginConnect(host, port, (ar) =>
+            {
+                Socket.EndConnect(ar);
+                connectDone.Set();
+            }, null);
+
+            connectDone.WaitOne(Config.TimeoutMs);
+
+            if (!Socket.Connected) throw new InvalidOperationException($"Failed connecting to {host}:{port}");
+            OnConnected();
+
+            BeginReceive();
+        }
+
+        public void Login()
+        {
+            if (!Socket.Connected)
+                throw new InvalidOperationException("You first need to connect to the server if you want to login.");
+            if (IsLoggedIn) throw new InvalidOperationException("You cannot log into a server two times.");
+            if (_isLoggingIn) throw new InvalidOperationException("You cannot try to log in when trying to log in.");
+
+            _isLoggingIn = true;
+            OnLoggedIn();
+            Send(TerrPacket.ConnectPacket);
         }
 
         private void SendLoginPackets()
         {
             // player appearance. It's not required but it's good to know which player represents this client.
             Send(TerrPacket.Create(TerrPacketType.PlayerAppearance,
-                new[] {_playerId}.Concat(Appearance.CreatePayload()).ToArray()));
-
-            // send uuid
-            //Send(TerrPacket.Create(TerrPacketType.ClientUuid,
-            //    new byte[] {0x24, 0x30}.Concat(Encoding.ASCII.GetBytes(Guid.NewGuid().ToString())).ToArray()));
-
-            // send player life
-            //Send(TerrPacket.Create(TerrPacketType.PlayerLife, new byte[]
-            //{
-            //    _playerId,
-            //    0x64, 0x00, //current life (int16) 0x64
-            //    0x64, 0x00 // max life (int16)
-            //}));
-
-            // send player mana
-            //Send(TerrPacket.Create(TerrPacketType.PlayerMana, new byte[]
-            //{
-            //    _playerId,
-            //    0x14, 0x00, //current mana (int16)
-            //    0x14, 0x00 // max mana (int16)
-            //}));
-            // send player buffs
-            //Send(TerrPacket.Create(TerrPacketType.UpdatePlayerBuff, new byte[]
-            //{
-            //    _playerId,
-            //    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            //    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-            //}));
-
-            // send inventory data
-            //for (byte i = 0; i <= 0xb3; i++)
-            //{
-            //    Send(TerrPacket.Create(TerrPacketType.SetInventory, new byte[]
-            //    {
-            //        i, _playerId,
-            //        0x00, 0x00, // stack (int16)
-            //        0x00, //prefix (byte)
-            //        0x00, 0x00 //item netid (int16)
-            //    }));
-            //}
+                new[] {PlayerId}.Concat(Config.Appearance.CreatePayload()).ToArray()));
 
             Send(TerrPacket.Create(TerrPacketType.RequestWorldInformation));
 
@@ -102,62 +76,11 @@ namespace TerrariaBridge
 
             Send(TerrPacket.Create(TerrPacketType.SpawnPlayer, new byte[]
             {
-                _playerId,
+                PlayerId,
                 0xff, 0xff, //spawn x (int16)
                 0xff, 0xff //spawn y (int16)
             }));
-        }
-
-        private void OnReceivePacket(TerrPacket packet)
-        {
-            if (packet == null) return;
-
-            Console.WriteLine($"Received {packet.Type} of length {packet.Length}");
-
-            switch (packet.Type)
-            {
-                case TerrPacketType.ContinueConnecting:
-                    _playerId = packet.Payload[0];
-                    Console.WriteLine($"Set pid to {_playerId}");
-                    SendLoginPackets();
-                    break;
-                case TerrPacketType.ChatMessage:
-                    Console.WriteLine($"Chat message: {Encoding.ASCII.GetString(packet.Payload)}");
-                    break;
-                // todo: send keepalives
-                case TerrPacketType.WorldInformation:
-                    _worldInfo = new WorldInfoData(packet);
-                    Console.WriteLine(
-                        $"World info:\r\nName: {_worldInfo.WorldName}\r\nSpawn X: {_worldInfo.SpawnX}\r\nSpawn Y: {_worldInfo.SpawnY}");
-                    break;
-                case TerrPacketType.Disconnect:
-                    Disconnect();
-                    break;
-            }
-        }
-
-        public void Start()
-        {
-            ManualResetEvent connectDone = new ManualResetEvent(false);
-
-            Socket.BeginConnect(Host, Port, (ar) =>
-            {
-                Socket.EndConnect(ar);
-                connectDone.Set();
-            }, null);
-
-            connectDone.WaitOne(_timeoutMs);
-
-            if (!Socket.Connected)
-            {
-                Console.WriteLine($"Failed connecting to {Host}:{Port}");
-                return;
-            }
-
-            Console.WriteLine($"Connected to {Socket.RemoteEndPoint}");
-
-            Send(TerrPacket.ConnectPacket);
-            BeginReceive();
+            _isLoggingIn = false;
         }
 
         private void BeginReceive()
@@ -169,40 +92,68 @@ namespace TerrariaBridge
                 byte[] buffer = new byte[Constants.BufferSize];
                 Socket.BeginReceive(buffer, 0, Constants.BufferSize, 0, ReceivePackets, buffer);
             }
-            catch { }
+            catch
+            {
+                Disconnect();
+            }
         }
 
         private void ReceivePackets(IAsyncResult ar)
         {
-            BeginReceive();
+            try
+            {
+                int bytesRead = Socket.EndReceive(ar);
 
-            int bytesRead = Socket.EndReceive(ar);
-            if (bytesRead <= 0) return;
+                if (bytesRead > 0)
+                {
+                    byte[] data = new byte[bytesRead];
+                    Array.Copy((byte[]) ar.AsyncState, data, bytesRead);
 
-            byte[] data = new byte[bytesRead];
-            Array.Copy((byte[]) ar.AsyncState, data, bytesRead);
+                    TerrPacket packet = TerrPacket.Parse(data);
 
-            Task.Run(() => OnReceivePacket(TerrPacket.Parse(data)));
+                    if (packet != null)
+                    {
+                        if (_isLoggingIn && packet.Type == TerrPacketType.ContinueConnecting)
+                        {
+                            PlayerId = packet.Payload[0];
+                            Task.Run(() => SendLoginPackets());
+                        }
+                        Task.Run(() => OnPacketReceived(packet));
+                    }
+                }
+                else
+                    Disconnect();
+
+                BeginReceive();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception when receiving packet: {ex}");
+            }
         }
 
+        ///<summary> Disconnects from the currently connected terraria server, allowing you to reuse this listener.</summary>
         public void Disconnect()
         {
-            _disconnectEvent.Set();
-            Socket.Disconnect(true);
-            Console.WriteLine("Disconnected");
-        }
+            if (!Socket.Connected)
+                throw new InvalidOperationException("You must be connected to a server to disconnect from it.");
 
-        /// <summary> Blocking call that will execute the provided async method and wait until the client has disconnected.</summary>
-        public void ExecuteAndWait(Func<Task> task)
-        {
-            task().GetAwaiter().GetResult();
-            Wait();
+            _disconnectEvent.Set();
+            OnDisconnected();
+            Socket.Disconnect(true);
+            IsLoggedIn = false;
         }
 
         ///<summary> Blocking call and wait until the client has disconnected.</summary>
         public void Wait() => _disconnectEvent.WaitOne();
 
-        private void Send(byte[] data) => Socket.BeginSend(data, 0, data.Length, 0, (ar) => Socket.EndSend(ar), null);
+        ///<summary> Sends data to the connected server.</summary>
+        public void Send(byte[] data)
+        {
+            if (!Socket.Connected)
+                throw new InvalidOperationException("You must be connected to a server to send data to it.");
+            Socket.BeginSend(data, 0, data.Length, 0, (ar) => Socket.EndSend(ar), null);
+        }
 
         public void Dispose() => Socket.Dispose();
     }

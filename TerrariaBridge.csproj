@@ -53,9 +53,12 @@
     <Compile Include="Packet\TerrColor.cs" />
     <Compile Include="Packet\WorldInfoData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TerrEventArgs.cs" />
     <Compile Include="TerrListener.cs" />
     <Compile Include="Packet\TerrPacket.cs" />
     <Compile Include="Packet\TerrPacketType.cs" />
+    <Compile Include="TerrListener.Events.cs" />
+    <Compile Include="TerrListenerConfig.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

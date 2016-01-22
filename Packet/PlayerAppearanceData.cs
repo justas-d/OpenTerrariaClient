@@ -25,6 +25,11 @@ namespace TerrariaBridge.Packet
         public TerrColor ShoeColor { get; set; }
         public byte Difficulty { get; set; }
 
+        public PlayerAppearanceData(string name = "Artificial Client")
+        {
+            Name = name;
+        }
+
         public byte[] CreatePayload()
         {
             using (MemoryStream stream = new MemoryStream(new byte[Constants.BufferSize]))
