@@ -1,5 +1,5 @@
 # TerrariaBridge
-A small library used to simulate a terraria client via a command line interface.
+A small library aimed at simulating a terraria client via a command line interface.
 
 # Capabilities
 In it's current state, this project can:
