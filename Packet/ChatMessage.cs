@@ -4,7 +4,7 @@ using System.Text;
 
 namespace TerrariaBridge.Packet
 {
-    public class ChatMessageData
+    public class ChatMessage
     {
         //public const int Index_MessageData = 5;
 
@@ -12,7 +12,7 @@ namespace TerrariaBridge.Packet
         public TerrColor Color { get;  }
         public string Message { get; }
 
-        public ChatMessageData(byte pid, TerrColor color, string message)
+        public ChatMessage(byte pid, TerrColor color, string message)
         {
             PlayerId = pid;
             Color = color;
@@ -33,13 +33,13 @@ namespace TerrariaBridge.Packet
             }
         }
 
-        public static ChatMessageData Parse(TerrPacket packet)
+        public static ChatMessage Parse(TerrPacket packet)
         {
             if(packet.Type != TerrPacketType.ChatMessage) throw new ArgumentException($"{nameof(packet.Type)} is not {TerrPacketType.ChatMessage}");
 
             using (PayloadReader reader = new PayloadReader(packet.Payload))
             {
-                return new ChatMessageData(
+                return new ChatMessage(
                     reader.ReadByte(),
                     new TerrColor(reader.ReadByte(), reader.ReadByte(), reader.ReadByte()),
                     reader.ReadString());

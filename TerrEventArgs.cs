@@ -3,31 +3,41 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge
 {
-    public sealed class TerrPacketReceivedEventArgs : EventArgs
+    public sealed class MessageReceivedEventArgs : EventArgs
+    {
+        public ChatMessage Message { get; }
+
+        public MessageReceivedEventArgs(ChatMessage msg)
+        {
+            Message = msg;
+        }
+    }
+
+    public sealed class PacketReceivedEventArgs : EventArgs
     {
         public TerrPacket Packet { get; }
 
-        public TerrPacketReceivedEventArgs(TerrPacket packet)
+        public PacketReceivedEventArgs(TerrPacket packet)
         {
             Packet = packet;
         }
     }
 
-    public sealed class TerrDisconnectEventArgs : EventArgs
+    public sealed class DisconnectEventArgs : EventArgs
     {
         public string Reason { get;}
 
-        public TerrDisconnectEventArgs(string reason)
+        public DisconnectEventArgs(string reason)
         {
             Reason = reason;
         }
     }
 
-    public sealed class TerrLoggedInEventArgs : EventArgs
+    public sealed class LoggedInEventArgs : EventArgs
     {
         public byte PlayerId { get; }
 
-        public TerrLoggedInEventArgs(byte pid)
+        public LoggedInEventArgs(byte pid)
         {
             PlayerId = pid;
         }

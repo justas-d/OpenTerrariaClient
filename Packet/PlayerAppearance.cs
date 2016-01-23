@@ -7,7 +7,7 @@ namespace TerrariaBridge.Packet
     /// <summary>
     /// Defines a player appearance packet payload, not including the player id which should be provided before this data in the payload.
     /// </summary>
-    public class PlayerAppearanceData
+    public class PlayerAppearance
     {
         public byte SkinVarient { get; set; }
         public byte Hair { get; set; }
@@ -25,7 +25,7 @@ namespace TerrariaBridge.Packet
         public TerrColor ShoeColor { get; set; }
         public byte Difficulty { get; set; }
 
-        public PlayerAppearanceData(string name = "Artificial Client")
+        public PlayerAppearance(string name = "Artificial Client")
         {
             Name = name;
         }

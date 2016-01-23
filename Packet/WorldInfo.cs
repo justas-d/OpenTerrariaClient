@@ -2,7 +2,7 @@
 
 namespace TerrariaBridge.Packet
 {
-    public class WorldInfoData
+    public class WorldInfo
     {
         public int Time { get; }
         public byte DayMoonInfo { get; }
@@ -51,7 +51,7 @@ namespace TerrariaBridge.Packet
         public sbyte InvasionType { get; }
         public ulong LobbyId { get; }
 
-        public WorldInfoData(TerrPacket packet)
+        public WorldInfo(TerrPacket packet)
         {
             if (packet.Type != TerrPacketType.WorldInformation) throw new ArgumentException($"{nameof(packet.Type)} is not {TerrPacketType.WorldInformation}");
 

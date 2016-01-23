@@ -68,44 +68,49 @@ namespace TerrariaBridge
 
             PacketReceived += (s, e) =>
             {
-                // login data
-                if (_isLoggingIn && e.Packet.Type == TerrPacketType.ContinueConnecting)
+                switch (e.Packet.Type)
                 {
-                    OnLoggedIn(e.Packet.Payload[0]);
-                    Task.Run(() => SendLoginPackets());
-                }
-                // item owner sync
-                if (e.Packet.Type == TerrPacketType.RemoveItemOwner)
-                {
-                    byte[] payload = new byte[sizeof (short) + 1];
+                    case TerrPacketType.ContinueConnecting:
+                        if (_isLoggingIn)
+                        {
+                            OnLoggedIn(e.Packet.Payload[0]);
+                            Task.Run(() => SendLoginPackets());
+                        }
+                        break;
 
-                    // copy over the item id from the remove item owner packet.
-                    Buffer.BlockCopy(e.Packet.Payload, 0, payload, 0, sizeof (short));
+                    case TerrPacketType.RemoveItemOwner:
+                        byte[] payload = new byte[sizeof (short) + 1];
 
-                    // set pid
-                    payload[sizeof (short)] = 0xff;
+                        // copy over the item id from the remove item owner packet.
+                        Buffer.BlockCopy(e.Packet.Payload, 0, payload, 0, sizeof (short));
 
-                    // send an update item owner sync packet with the item id from the remove owner packet and a player id of 0xff.
-                    Send(TerrPacket.Create(TerrPacketType.UpdateItemOwner, payload));
-                }
-                // disconnect packet
-                if (e.Packet.Type == TerrPacketType.Disconnect)
-                {
-                    // terraria transfers its strings prefixed with a length.
-                    // we don't need that length so lets get rid of it here.
-                    byte[] stringData = new byte[e.Packet.Payload.Length - 1];
-                    Buffer.BlockCopy(e.Packet.Payload, 1, stringData, 0, stringData.Length);
-                    SetDisconnectState(Encoding.ASCII.GetString(stringData));
-                }
-                if (e.Packet.Type == TerrPacketType.RequestPassword)
-                {
-                    if (string.IsNullOrEmpty(password))
-                        throw new ArgumentNullException(password);
+                        // set pid
+                        payload[sizeof (short)] = 0xff;
 
-                    Send(TerrPacket.Create(TerrPacketType.SendPassword, Utils.EncodeTerrString(password)));
+                        // send an update item owner sync packet with the item id from the remove owner packet and a player id of 0xff.
+                        Send(TerrPacket.Create(TerrPacketType.UpdateItemOwner, payload));
+                        break;
+
+                    case TerrPacketType.Disconnect:
+                        // terraria transfers its strings prefixed with a length.
+                        // we don't need that length so lets get rid of it here.
+                        byte[] stringData = new byte[e.Packet.Payload.Length - 1];
+                        Buffer.BlockCopy(e.Packet.Payload, 1, stringData, 0, stringData.Length);
+                        SetDisconnectState(Encoding.ASCII.GetString(stringData));
+                        break;
+
+                    case TerrPacketType.RequestPassword:
+                        if (string.IsNullOrEmpty(password))
+                            throw new ArgumentNullException(password);
+
+                        Send(TerrPacket.Create(TerrPacketType.SendPassword, Utils.EncodeTerrString(password)));
+
+                        break;
+
+                    case TerrPacketType.ChatMessage:
+                        OnMessageReceived(ChatMessage.Parse(e.Packet));
+                        break;
                 }
-                if(e.Packet.Type == TerrPacketType.ChatMessage)
-                    OnChatMessageReceived(ChatMessageData.Parse(e.Packet));
             };
             Send(TerrPacket.Create(TerrPacketType.ConnectRequest, Utils.EncodeTerrString(TerrariaVersion)));
         }

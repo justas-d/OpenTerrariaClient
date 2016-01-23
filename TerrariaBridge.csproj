@@ -46,15 +46,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
-    <Compile Include="Packet\ChatMessageData.cs" />
-    <Compile Include="Packet\ModifyTileData.cs" />
+    <Compile Include="Packet\ChatMessage.cs" />
+    <Compile Include="Packet\ModifyTile.cs" />
     <Compile Include="Packet\PayloadReader.cs" />
-    <Compile Include="Packet\PlayerAppearanceData.cs" />
-    <Compile Include="Packet\PlayerData.cs" />
+    <Compile Include="Packet\PlayerAppearance.cs" />
+    <Compile Include="Packet\Player.cs" />
     <Compile Include="Packet\PlayerInventory.cs" />
     <Compile Include="Packet\PlayerInventorySlot.cs" />
     <Compile Include="Packet\TerrColor.cs" />
-    <Compile Include="Packet\WorldInfoData.cs" />
+    <Compile Include="Packet\WorldInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TerrEventArgs.cs" />
     <Compile Include="TerrListener.cs" />

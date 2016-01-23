@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace TerrariaBridge.Packet
 {
-    public class ModifyTileData
+    public class ModifyTile
     {
         public byte Action { get; set; }
         public short TileX { get; set; }
@@ -12,7 +12,7 @@ namespace TerrariaBridge.Packet
         public short Var1 { get; set; }
         public byte Var2 { get; set; }
 
-        public ModifyTileData()
+        public ModifyTile()
         {
             
         }
