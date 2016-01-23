@@ -43,6 +43,26 @@ namespace TerrariaBridge.Packet
         }
 
         /// <summary>
+        /// Converts a payloadless packet to a packet with an empty payload of given size.
+        /// </summary>
+        /// <param name="payloadlessPacket">The packet without a payload which will be converted to a packet with an empty payload of given size.</param>
+        /// <param name="payloadSize">The size of the payload which will be added to the given payloadless packet.</param>
+        /// <returns>The new packet with an empty payload of given size.</returns>
+        public static byte[] PayloadlessToPayloadPacket(byte[] payloadlessPacket, short payloadSize)
+        {
+            ushort packetLength = Convert.ToUInt16(payloadlessPacket.Length + payloadSize);
+            byte[] packet = new byte[packetLength];
+
+            //Copy over the stuff over from the payload less packet into our new one.
+            Buffer.BlockCopy(payloadlessPacket, 0, packet, 0, payloadlessPacket.Length);
+
+            //Set the new length
+            Buffer.BlockCopy(BitConverter.GetBytes(packetLength), 0, packet, 0, Size_Length);
+
+            return packet;
+        }
+
+        /// <summary>
         /// Creates bytes that represent a terraria client -> server (with payload) packet.
         /// </summary>
         /// <param name="type">The type of the packet.</param>
@@ -50,17 +70,7 @@ namespace TerrariaBridge.Packet
         /// <returns>A new byte array containing the bytes of the packet.</returns>
         public static byte[] Create(TerrPacketType type, byte[] payload)
         {
-            //Create payloadless packet
-            byte[] payloadLessPacket = Create(type);
-
-            ushort packetLength = Convert.ToUInt16(payloadLessPacket.Length + payload.Length);
-            byte[] packet = new byte[packetLength];
-
-            //Copy over the stuff over from the payload less packet into our new one.
-            Buffer.BlockCopy(payloadLessPacket, 0, packet, 0, payloadLessPacket.Length);
-
-            //Set the new length
-            Buffer.BlockCopy(BitConverter.GetBytes(packetLength), 0, packet, 0, Size_Length);
+            byte[] packet = PayloadlessToPayloadPacket(Create(type), (short)payload.Length);
 
             //Set payload
             Buffer.BlockCopy(payload, 0, packet, Index_Payload, payload.Length);

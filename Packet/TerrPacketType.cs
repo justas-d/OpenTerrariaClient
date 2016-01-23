@@ -14,7 +14,7 @@
         SendSection = 10,
         SectionTileFrame = 11,
         SpawnPlayer = 12,
-        Update = 13,
+        UpdateItem = 13,
         PlayerActive = 14,
         NullNeverSent = 15,
         PlayerLife = 16,

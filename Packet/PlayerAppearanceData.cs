@@ -7,7 +7,7 @@ namespace TerrariaBridge.Packet
     /// <summary>
     /// Defines a player appearance packet payload, not including the player id which should be provided before this data in the payload.
     /// </summary>
-    public class PlayerAppearanceData : IPayload
+    public class PlayerAppearanceData
     {
         public byte SkinVarient { get; set; }
         public byte Hair { get; set; }
@@ -30,12 +30,14 @@ namespace TerrariaBridge.Packet
             Name = name;
         }
 
-        public byte[] CreatePayload()
+        public byte[] CreatePayload(byte pid)
         {
-            using (MemoryStream stream = new MemoryStream(new byte[Constants.BufferSize]))
+            using (MemoryStream stream = new MemoryStream())
             {
                 using (BinaryWriter writer = new BinaryWriter(stream))
                 {
+                    writer.Write(pid);
+
                     foreach (PropertyInfo prop in GetType().GetProperties())
                     {
                         if (prop.PropertyType == typeof (byte))
@@ -49,10 +51,7 @@ namespace TerrariaBridge.Packet
 
                         else throw new InvalidOperationException($"$Invalid property type {prop.PropertyType}.");
                     }
-                    byte[] payload = new byte[stream.Position];
-                    Buffer.BlockCopy(stream.ToArray(), 0, payload, 0, (int)stream.Position);
-
-                    return payload;
+                    return stream.ToArray();
                 }
             }
         }

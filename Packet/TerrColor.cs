@@ -1,6 +1,6 @@
 ﻿namespace TerrariaBridge.Packet
 {
-    public struct TerrColor : IPayload
+    public struct TerrColor
     {
         public byte R { get; }
         public byte G { get; }

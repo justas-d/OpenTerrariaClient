@@ -1,40 +1,16 @@
-﻿using System;
-using TerrariaBridge.Packet;
+﻿using TerrariaBridge.Packet;
 
 namespace TerrariaBridge
 {
     public class TerrListenerConfig
     {
-        private bool _isLocked;
+        public int TimeoutMs { get; }
+        public PlayerData PlayerData { get; }
 
-        private PlayerAppearanceData _appearance = new PlayerAppearanceData();
-        private int _timeoutMs = 5000;
-
-        public PlayerAppearanceData Appearance
+        public TerrListenerConfig(int timeoutms = 5000, PlayerData playerData = null)
         {
-            get { return _appearance; }
-            set { SetValue(ref _appearance, value); }
+            TimeoutMs = timeoutms;
+            PlayerData = playerData ?? new PlayerData();
         }
-
-        public int TimeoutMs
-        {
-            get { return _timeoutMs; }
-            set { SetValue(ref _timeoutMs, value); }
-        }
-
-        public TerrListenerConfig()
-        {
-        }
-
-        // https://github.com/RogueException/Discord.Net/blob/master/src/Discord.Net/Config.cs
-        private void SetValue<U>(ref U storage, U value)
-        {
-            if (_isLocked)
-                throw new InvalidOperationException(
-                    "Unable to modify a client's configuration after it has been created.");
-            storage = value;
-        }
-
-        public void Lock() => _isLocked = true;
     }
 }
