@@ -49,7 +49,7 @@ namespace TerrariaBridge
 
             connectDone.WaitOne(Config.TimeoutMs);
 
-            if (!Socket.Connected) throw new InvalidOperationException($"Failed connecting to {host}:{port}");
+            if (!Socket.Connected) throw new ArgumentException($"Failed connecting to {host}:{port}");
             OnConnected();
 
             BeginReceive();
