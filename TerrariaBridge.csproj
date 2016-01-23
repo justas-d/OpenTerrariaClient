@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
+    <Compile Include="Packet\ChatMessageData.cs" />
     <Compile Include="Packet\ModifyTileData.cs" />
     <Compile Include="Packet\PayloadReader.cs" />
     <Compile Include="Packet\PlayerAppearanceData.cs" />

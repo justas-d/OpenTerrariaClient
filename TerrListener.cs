@@ -92,7 +92,7 @@ namespace TerrariaBridge
                 if (e.Packet.Type == TerrPacketType.Disconnect)
                 {
                     // terraria transfers its strings prefixed with a length.
-                    //we don't need that length so lets get rid of it here.
+                    // we don't need that length so lets get rid of it here.
                     byte[] stringData = new byte[e.Packet.Payload.Length - 1];
                     Buffer.BlockCopy(e.Packet.Payload, 1, stringData, 0, stringData.Length);
                     SetDisconnectState(Encoding.ASCII.GetString(stringData));
@@ -104,8 +104,9 @@ namespace TerrariaBridge
 
                     Send(TerrPacket.Create(TerrPacketType.SendPassword, Utils.EncodeTerrString(password)));
                 }
+                if(e.Packet.Type == TerrPacketType.ChatMessage)
+                    OnChatMessageReceived(ChatMessageData.Parse(e.Packet));
             };
-
             Send(TerrPacket.Create(TerrPacketType.ConnectRequest, Utils.EncodeTerrString(TerrariaVersion)));
         }
 
