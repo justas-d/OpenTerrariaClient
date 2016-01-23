@@ -15,6 +15,6 @@ Tshock support hasn't been tested and is not planned.
 * .Net 4.5.2
 * C#6
 * A Terraria server to connect to
-* 
+
 # Usage
 Refer to https://github.com/SSStormy/TerrariaBridgeTests/blob/master/Program.cs
