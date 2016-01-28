@@ -2,6 +2,7 @@
 {
     public enum TerrPacketType : byte
     {
+        None = 0,
         ConnectRequest = 1,
         Disconnect = 2,
         ContinueConnecting = 3,
@@ -14,7 +15,7 @@
         SendSection = 10,
         SectionTileFrame = 11,
         SpawnPlayer = 12,
-        UpdateItem = 13,
+        UpdatePlayer = 13,
         PlayerActive = 14,
         NullNeverSent = 15,
         PlayerLife = 16,
@@ -78,7 +79,7 @@
         AnglerQuest = 74,
         CompleteAnglerQuestToday = 75,
         NumberOfAnglerQuestsCompleted = 76,
-        CcreateTemporaryAnimation = 77,
+        CreateTemporaryAnimation = 77,
         ReportInvasionProgress = 78,
         PlaceObject = 79,
         SyncPlayerChestIndex = 80,

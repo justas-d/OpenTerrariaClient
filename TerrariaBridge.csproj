@@ -45,27 +45,37 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Constants.cs" />
+    <Compile Include="Client\Builders.cs" />
+    <Compile Include="Client\Service\InternalPacketManagerService.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Packet\ChatMessage.cs" />
-    <Compile Include="Packet\ModifyTile.cs" />
+    <Compile Include="Packet\MiscPackets.cs" />
+    <Compile Include="Client\Service\PacketEventService.cs" />
+    <Compile Include="Packet\PacketWrapper.cs" />
     <Compile Include="Packet\PayloadReader.cs" />
     <Compile Include="Packet\PlayerAppearance.cs" />
     <Compile Include="Packet\Player.cs" />
-    <Compile Include="Packet\PlayerInventory.cs" />
     <Compile Include="Packet\PlayerInventorySlot.cs" />
     <Compile Include="Packet\TerrColor.cs" />
     <Compile Include="Packet\WorldInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TerrEventArgs.cs" />
-    <Compile Include="TerrListener.cs" />
+    <Compile Include="Client\Service\ServiceManager.cs" />
+    <Compile Include="Client\TerrEventArgs.cs" />
+    <Compile Include="Client\TerrariaClient.cs" />
     <Compile Include="Packet\TerrPacket.cs" />
     <Compile Include="Packet\TerrPacketType.cs" />
-    <Compile Include="TerrListener.Events.cs" />
-    <Compile Include="TerrListenerConfig.cs" />
+    <Compile Include="Client\TerrariaClient.Events.cs" />
+    <Compile Include="Client\TerrariaClientConfig.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\StrmyCore\StrmyCore.csproj">
+      <Project>{d753d513-b32f-48da-ae72-a24617fbfc86}</Project>
+      <Name>StrmyCore</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

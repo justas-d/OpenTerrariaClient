@@ -1,49 +1,37 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 namespace TerrariaBridge.Packet
 {
-    public class ChatMessage
+    public class ChatMessage : PacketWrapper
     {
-        //public const int Index_MessageData = 5;
+        public byte PlayerId { get; private set; }
+        public TerrColor Color { get; private set; }
+        public string Text { get; private set; }
 
-        public byte PlayerId { get; }
-        public TerrColor Color { get;  }
-        public string Message { get; }
+        internal ChatMessage() { }
 
-        public ChatMessage(byte pid, TerrColor color, string message)
+        internal ChatMessage(byte pid, TerrColor color, string message)
         {
             PlayerId = pid;
             Color = color;
-            Message = message;
+            Text = message;
         }
 
-        public byte[] CreatePayload()
+        protected override void WritePayload(BinaryWriter writer)
         {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                using (BinaryWriter writer = new BinaryWriter(stream))
-                {
-                    writer.Write(PlayerId);
-                    writer.Write(Color.CreatePayload());
-                    writer.Write(Message);
-                }
-                return stream.ToArray();
-            }
+            writer.Write(PlayerId);
+            writer.Write(Color.CreatePayload());
+            writer.Write(Text);
         }
 
-        public static ChatMessage Parse(TerrPacket packet)
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
         {
-            if(packet.Type != TerrPacketType.ChatMessage) throw new ArgumentException($"{nameof(packet.Type)} is not {TerrPacketType.ChatMessage}");
+            if (type != TerrPacketType.ChatMessage) throw new ArgumentException($"{nameof(type)} is not {TerrPacketType.ChatMessage}");
 
-            using (PayloadReader reader = new PayloadReader(packet.Payload))
-            {
-                return new ChatMessage(
-                    reader.ReadByte(),
-                    new TerrColor(reader.ReadByte(), reader.ReadByte(), reader.ReadByte()),
-                    reader.ReadString());
-            }
+            PlayerId = reader.ReadByte();
+            Color = reader.ReadTerrColor();
+            Text = reader.ReadString();
         }
     }
 }

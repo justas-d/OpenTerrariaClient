@@ -1,7 +1,7 @@
 ﻿using System;
 using TerrariaBridge.Packet;
 
-namespace TerrariaBridge
+namespace TerrariaBridge.Client
 {
     public sealed class MessageReceivedEventArgs : EventArgs
     {

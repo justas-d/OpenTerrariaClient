@@ -4,14 +4,13 @@ namespace TerrariaBridge.Packet
 {
     public class TerrPacket
     {
-        private const byte Index_Length = 0;
         private const byte Index_PacketId = 2;
         private const byte Index_Payload = 3;
 
         private const byte Size_Length = sizeof(ushort);
         private const byte Size_PacketId = sizeof(byte);
 
-        public byte Length { get; private set; }
+        public ushort Length { get; private set; }
         public TerrPacketType Type { get; private set; }
         public byte[] Payload { get; private set; }
 
@@ -20,22 +19,50 @@ namespace TerrariaBridge.Packet
 
         }
 
+        public static ushort GetSize(byte[] data) => BitConverter.ToUInt16(data, 0);
+        public static TerrPacketType GetType(byte[] data) => (TerrPacketType) data[Index_PacketId];
+
+        public static TerrPacket Parse(byte[] data, int length) => Parse(data, length, GetSize(data));
+
         public static TerrPacket Parse(byte[] data)
         {
-            byte size = data[Index_Length];
+            ushort packetSize = GetSize(data);
+            return Parse(data, packetSize, packetSize);
+        }
 
-            if (data.Length != size)
+        private static TerrPacket Parse(byte[] data, int expectedLength, ushort packetProvidedLength)
+        {
+            if (expectedLength != packetProvidedLength)
+            {
+                if (GetType(data) == TerrPacketType.SendSection)
+                {
+                    Console.WriteLine("Dropped send section");
+                    return null;
+                }
+
+                /*
+                if we hit expectedLength > packetProvidedLength
+                  that probably means there are more packets then one in the buffer,
+                  go into a while loop like the one we see in netbuffer
+                if its the opposite
+                  probably means incomplete packet, not sure if this even happens
+                */
+
+                Console.WriteLine($"Expected != provided: {expectedLength} != {packetProvidedLength}");
                 return null;
+            }
+
             //if the lenght of the data array isin't the same as the one we got from the array data then it's probably a malformed packet.
 
             TerrPacket retval = new TerrPacket
             {
-                Length = size,
-                Type = (TerrPacketType)data[Index_PacketId]
+                Length = packetProvidedLength,
+                Type = GetType(data)
             };
 
             //extract payload
-            byte[] payloadBuffer = new byte[size - Index_Payload];
+            byte[] payloadBuffer = new byte[packetProvidedLength - Index_Payload];
+
             Buffer.BlockCopy(data, Index_Payload, payloadBuffer, 0, payloadBuffer.Length);
             retval.Payload = payloadBuffer;
 
@@ -85,8 +112,6 @@ namespace TerrariaBridge.Packet
         /// <returns>A new byte array containing the bytes of the packet.</returns>
         public static byte[] Create(TerrPacketType type)
         {
-            Console.WriteLine($"Creating packet {type}");
-
             ushort packetLength = Size_Length + Size_PacketId;
             byte[] packet = new byte[packetLength];
 
@@ -98,5 +123,8 @@ namespace TerrariaBridge.Packet
 
             return packet;
         }
+
+        public static byte[] Create(TerrPacketType type, string payload)
+            => Create(type, Utils.EncodeTerrString(payload));
     }
 }
