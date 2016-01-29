@@ -12,11 +12,15 @@ namespace TerrariaBridge.Client
         public string Password { get; internal set; }
         public string TerrariaVersion { get; internal set; }
         public string ItemTableDir { get; internal set; }
+        public string BuffTable { get; internal set; }
+        public string NpcTable { get; internal set; }
+        public string InvasionTable { get; internal set; }
 
         private TerrariaClientConfig() { }
 
         public TerrariaClientConfig(Guid? playerGuid = null, int keepaliveFreqMs = 5000, int timeoutms = 5000,
-            Player playerData = null, string password = null, string terrariaVersion = "Terraria156", string itemTableDir = "itemlist.json")
+            Player playerData = null, string password = null, string terrariaVersion = "Terraria156",
+            string itemTableDir = "itemlist.json", string buffTable = "bufftable.json", string npcTable = "npctable.json", string invasionTable = "invasiontable.json")
         {
             TimeoutMs = timeoutms;
             PlayerData = playerData ?? new Player();
@@ -25,6 +29,9 @@ namespace TerrariaBridge.Client
             KeepaliveFrequencyMs = keepaliveFreqMs;
             PlayerGuid = playerGuid;
             ItemTableDir = itemTableDir;
+            BuffTable = buffTable;
+            NpcTable = npcTable;
+            InvasionTable = invasionTable;
         }
     }
 }

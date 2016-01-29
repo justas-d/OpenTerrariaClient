@@ -49,7 +49,9 @@ namespace TerrariaBridge.Client.Service
 
                 player.Inventory.InternalItems[setItem.SlotId.Value] = setItem;
             });
-            _events.Subscribe(TerrPacketType.WorldInformation, packet =>_client.World = PacketWrapper.Parse<WorldInfo>(packet));
+            _events.Subscribe(TerrPacketType.WorldInformation,
+                packet => _client.World = PacketWrapper.Parse<WorldInfo>(packet));
+
             _events.Subscribe(TerrPacketType.Statusbar, packet => _client.OnStatusReceived(PacketWrapper.Parse<Status>(packet)));
             _events.Subscribe(TerrPacketType.PlayerLife, packet =>
             {

@@ -216,9 +216,9 @@ namespace TerrariaBridge.Client
 
                     ushort packetProvidedLength = TerrPacket.GetSize(buffer);
 
-                    if (bytesReceived > packetProvidedLength)
+                    if (bytesReceived >= packetProvidedLength)
                     {
-                        // more packets then one in buffer
+                        // one or more packets in buffer
                         using (BinaryReader reader = new BinaryReader(new MemoryStream(buffer, 0, bytesReceived)))
                         {
                             while (reader.BaseStream.Position <= reader.BaseStream.Length - sizeof (ushort))
@@ -231,7 +231,7 @@ namespace TerrariaBridge.Client
                                 if (packetBuffer.Length != packetLength)
                                 {
                                     incompletePacketsLength += packetBuffer.Length;
-                                    Log.Info("Malformed packet in packetBuffer. Adding to incomplete packet buffer");
+                                    Log.Info($"Incomplete packet in packetBuffer. Type {TerrPacket.GetType(packetBuffer)} Sizes: expected {packetLength} actual: {packetBuffer.Length} Adding to incomplete packet buffer");
 
                                     if (incompletePacketBuffer == null)
                                         incompletePacketBuffer = new byte[BufferSize];
@@ -264,16 +264,11 @@ namespace TerrariaBridge.Client
                             }
                         }
                     }
-                    else if (bytesReceived == packetProvidedLength)
-                    {
-                        // one packet in buffer
-                        OnPacketReceived(TerrPacket.Parse(buffer, bytesReceived, this));
-                    }
                     else
                     {
                         // not a full packet in buffer, fuck it
-                        // havent hit this yet (SendSections have hit it but fuck them)
-                        Log.Warning($"Malformed packet. Parsed type {TerrPacket.GetType(buffer), -15}. Sizes: expected {packetProvidedLength, -5} received {bytesReceived}");
+                        // havent hit this with a critical packet (SendSections have hit it but fuck them)
+                        Log.Warning($"Malformed packet. Parsed type {TerrPacket.GetType(buffer)}. Sizes: expected {packetProvidedLength, -5} received {bytesReceived}");
                     }
                     BeginReceive(incompletePacketBuffer);
 
