@@ -23,7 +23,7 @@ namespace TerrariaBridge.Packet
             Id = value.Id;
         }
 
-        public PlayerItem(byte id = 0, short stack = 0, byte prefix = 0)
+        public PlayerItem(short id = 0, short stack = 0, byte prefix = 0)
         {
             Id = id;
             Stack = stack;

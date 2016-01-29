@@ -15,8 +15,16 @@ namespace TerrariaBridge.Client
         internal void OnConnected() => Connected(this, EventArgs.Empty);
         internal void OnDisconnected(string reason) => Disconnected(this, new DisconnectEventArgs(reason));
         internal void OnLoggedIn(byte pid) => LoggedIn(this, new LoggedInEventArgs(pid));
-        internal void OnPacketReceived(TerrPacket packet) => PacketReceived(this, new PacketReceivedEventArgs(packet));
-        internal void OnMessageReceived(ChatMessage msg, MessageReceivedEventArgs.SenderType sender) => MessageReceived(this, new MessageReceivedEventArgs(msg, sender));
+
+        internal void OnPacketReceived(TerrPacket packet)
+        {
+            if (TerrPacket.IsValidType(packet.Type))
+                PacketReceived(this, new PacketReceivedEventArgs(packet));
+        }
+
+        internal void OnMessageReceived(ChatMessage msg, MessageReceivedEventArgs.SenderType sender)
+            => MessageReceived(this, new MessageReceivedEventArgs(msg, sender, GetPlayer(msg.PlayerId)));
+
         internal void OnStatusReceived(Status status) => StatusReceived(this, new StatusReceivedEventArgs(status));
     }
 }

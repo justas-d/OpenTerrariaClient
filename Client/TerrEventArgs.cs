@@ -10,14 +10,16 @@ namespace TerrariaBridge.Client
             Player,
             Server
         }
-        
+
         public ChatMessage Message { get; }
         public SenderType Sender { get; }
+        public Player Player { get; }
 
-        public MessageReceivedEventArgs(ChatMessage msg, SenderType sender)
+        public MessageReceivedEventArgs(ChatMessage msg, SenderType sender, Player player)
         {
             Message = msg;
             Sender = sender;
+            Player = player;
         }
     }
 

@@ -22,6 +22,8 @@ namespace TerrariaBridge.Packet
 
         }
 
+        public static bool IsValidType(TerrPacketType type) => Enum.IsDefined(typeof(TerrPacketType), type) && type != TerrPacketType.None;
+
         public static ushort GetSize(byte[] data)
             => (ushort) (data.Length >= sizeof (ushort) ? BitConverter.ToUInt16(data, 0) : 0);
 

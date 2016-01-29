@@ -15,8 +15,6 @@ namespace TerrariaBridge.Client.Service
         {
             client.PacketReceived += (s, e) =>
             {
-                if (!Enum.IsDefined(typeof (TerrPacketType), e.Packet.Type)) return;
-
                 if (_packetEvents.ContainsKey(e.Packet.Type))
                     _packetEvents[e.Packet.Type](e.Packet);
             };
@@ -29,7 +27,7 @@ namespace TerrariaBridge.Client.Service
         /// </summary>
         public void Subscribe(TerrPacketType type, OnPacketReceivedEvent evnt)
         {
-            if (Enum.IsDefined(typeof (TerrPacketType), type))
+            if (TerrPacket.IsValidType(type))
             {
                 if (_packetEvents.ContainsKey(type))
                     _packetEvents[type] += evnt;
@@ -37,7 +35,7 @@ namespace TerrariaBridge.Client.Service
                     _packetEvents.Add(type, evnt);
             }
             else
-                throw new ArgumentException($"{type} is not a member of {typeof (TerrPacketType).Name}");
+                throw new ArgumentException($"{type} is not a valid TerrPacketType type.");
         }
     }
 }

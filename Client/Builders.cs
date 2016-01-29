@@ -71,6 +71,7 @@ namespace TerrariaBridge.Client
         public void BuffTable(string dir) => Outval.BuffTable = dir;
         public void NpcTable(string dir) => Outval.NpcTable = dir;
         public void InvasionTable(string dir) => Outval.InvasionTable= dir;
+        public void ProjectileTable(string dir) => Outval.ProjectileTable= dir;
 
         public TerrariaClientConfigBuilder(TerrariaClientConfig outval) : base(outval)
         {

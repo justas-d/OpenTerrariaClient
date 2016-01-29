@@ -239,12 +239,6 @@ namespace TerrariaBridge.Client
                                     Buffer.BlockCopy(packetBuffer, 0, incompletePacketBuffer,
                                         incompletePacketsLength, packetBuffer.Length);
                                     /*
-                                    todo : if this hits we should put the packetBuffer into a incompletePacket buffer,
-                                    which we pass as the state in the next BeginReceive() if it's not null
-                                    once in the beginreceive we check for the state as a byte[]
-                                    if it's not null then we put the incompletepacketbuffer onto the packetBuffer
-                                    and then we call _socketBegin receive with an offset of size incompletePacketBuffer
-
                                     todo : start a thread safe write queue loop in ctor for non thread safe sets
                                     since every packet should possible be a seperate thread we want as much thread safety as possible and the least amount of locks
                                     for this i'd say we have a queue of (ref object setobj, object value)
