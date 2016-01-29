@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using StrmyCore;
 using TerrariaBridge.Client.Service;
 using TerrariaBridge.Packet;
 
@@ -16,6 +17,11 @@ namespace TerrariaBridge.Client
         private readonly ConcurrentDictionary<byte, Player> _players = new ConcurrentDictionary<byte, Player>();
 
         private const int BufferSize = 0x1FFFE;
+        public const byte ServerPlayerId = byte.MaxValue;
+
+        private Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) { PlayerId = ServerPlayerId };
+
+        public Logger Log { get; } = new Logger();
 
         ///<summary>Returns the configuration data used for this client.</summary>
         public TerrariaClientConfig Config { get; internal set; }
@@ -31,6 +37,7 @@ namespace TerrariaBridge.Client
         public IEnumerable<Player> Players => _players.Values;
         ///<summary>Returns the player that the bot appears as.</summary>
         public CurrentPlayer CurrentPlayer { get; private set; }
+
         ///<summary>Returns the latest information about the terraria world the server provided to the bot.</summary>
         public WorldInfo World { get; internal set; }
 
@@ -108,20 +115,20 @@ namespace TerrariaBridge.Client
             Player ignored;
             _players.TryRemove(pid, out ignored);
 
-            Console.WriteLine($"Disconnected: {pid}");
+            Log.Warning($"Disconnected: {pid}");
             return true;
         }
 
         internal Player RegisterPlayer(byte pid)
         {
-            if (pid == byte.MaxValue) return null; // 0xff isin't a valid pid
+            if (pid == ServerPlayerId) return null;
             if (_players.ContainsKey(pid)) return null; // dont register a player if we contain it
             if (CurrentPlayer.PlayerId == pid) return null; // dont register ourselves
 
             Player player = new Player(pid, this);
             _players.TryAdd(pid, player);
 
-            Console.WriteLine($"Connected: {pid}");
+            Log.Info($"Connected: {pid}");
             return player;
         }
 
@@ -131,6 +138,8 @@ namespace TerrariaBridge.Client
 
             if (CurrentPlayer.PlayerId == playerId)
                 return CurrentPlayer;
+
+            if (playerId == ServerPlayerId) return ServerDummyPlayer;
 
             Player retval;
             _players.TryGetValue(playerId, out retval);
@@ -170,7 +179,6 @@ namespace TerrariaBridge.Client
 
         private void BeginReceive(object state = null)
         {
-            // i think its working
             try
             {
                 if (!_socket.Connected) throw new InvalidOperationException();
@@ -222,14 +230,12 @@ namespace TerrariaBridge.Client
 
                                 if (packetBuffer.Length != packetLength)
                                 {
-                                    incompletePacketsLength  += packetBuffer.Length;
-                                    Console.WriteLine("Malformed packet in packetBuffer");
+                                    incompletePacketsLength += packetBuffer.Length;
+                                    Log.Info("Malformed packet in packetBuffer. Adding to incomplete packet buffer");
 
                                     if (incompletePacketBuffer == null)
                                         incompletePacketBuffer = new byte[BufferSize];
 
-                                    // todo : throws if a player was in server before bot conencts
-                                    // replace incompletePacketBuffer with a MemoryStream + writer + reader.
                                     Buffer.BlockCopy(packetBuffer, 0, incompletePacketBuffer,
                                         incompletePacketsLength, packetBuffer.Length);
                                     /*
@@ -249,20 +255,25 @@ namespace TerrariaBridge.Client
                                     */
                                 }
                                 else
-                                    OnPacketReceived(TerrPacket.Parse(packetBuffer));
+                                {
+                                    if (packetLength >= TerrPacket.MinPacketSize)
+                                        OnPacketReceived(TerrPacket.Parse(packetBuffer, this));
+                                    else  // this is rare but when it happens it breaks receiving.
+                                        Log.Critical($"Received packet under min size: {packetLength}");
+                                }
                             }
                         }
                     }
                     else if (bytesReceived == packetProvidedLength)
                     {
                         // one packet in buffer
-                        OnPacketReceived(TerrPacket.Parse(buffer, bytesReceived));
+                        OnPacketReceived(TerrPacket.Parse(buffer, bytesReceived, this));
                     }
                     else
                     {
                         // not a full packet in buffer, fuck it
                         // havent hit this yet (SendSections have hit it but fuck them)
-                        Console.WriteLine($"Malformed packet. Parsed type {TerrPacket.GetType(buffer), -15}. Sizes: expected {packetProvidedLength, -5} received {bytesReceived}");
+                        Log.Warning($"Malformed packet. Parsed type {TerrPacket.GetType(buffer), -15}. Sizes: expected {packetProvidedLength, -5} received {bytesReceived}");
                     }
                     BeginReceive(incompletePacketBuffer);
 

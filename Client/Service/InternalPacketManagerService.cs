@@ -49,16 +49,8 @@ namespace TerrariaBridge.Client.Service
 
                 player.Inventory.InternalItems[setItem.SlotId.Value] = setItem;
             });
-            _events.Subscribe(TerrPacketType.WorldInformation, packet =>
-            {
-                WorldInfo worldInfo = PacketWrapper.Parse<WorldInfo>(packet);
-                _client.World = worldInfo;
-            });
-            _events.Subscribe(TerrPacketType.Statusbar, packet =>
-            {
-                Status status = PacketWrapper.Parse<Status>(packet);
-                Console.WriteLine($"Received status max: {status.StatusMax} msg: {status.Text}");
-            });
+            _events.Subscribe(TerrPacketType.WorldInformation, packet =>_client.World = PacketWrapper.Parse<WorldInfo>(packet));
+            _events.Subscribe(TerrPacketType.Statusbar, packet => _client.OnStatusReceived(PacketWrapper.Parse<Status>(packet)));
             _events.Subscribe(TerrPacketType.PlayerLife, packet =>
             {
                 ValPidPair<short> lifePair = PacketWrapper.Parse<ValPidPair<short>>(packet);
@@ -84,7 +76,7 @@ namespace TerrariaBridge.Client.Service
             {
                 AddPlayerBuff addPlayerBuff = PacketWrapper.Parse<AddPlayerBuff>(packet);
                 _client.RegisterPlayer(addPlayerBuff.PlayerId);
-                Console.WriteLine(
+                _client.Log.Info(
                     $"Add player buff pid {addPlayerBuff.PlayerId} buff: {addPlayerBuff.Buff} time: {addPlayerBuff.Time}");
             });
             _events.Subscribe(TerrPacketType.UpdatePlayer, packet =>
@@ -106,8 +98,11 @@ namespace TerrariaBridge.Client.Service
             _events.Subscribe(TerrPacketType.ChatMessage, packet =>
             {
                 ChatMessage msg = PacketWrapper.Parse<ChatMessage>(packet);
-                client.RegisterPlayer(msg.PlayerId);
-                client.OnMessageReceived(msg);
+
+                client.OnMessageReceived(msg,
+                    client.GetPlayer(msg.PlayerId).IsServer
+                        ? MessageReceivedEventArgs.SenderType.Server
+                        : MessageReceivedEventArgs.SenderType.Player);
             });
             _events.Subscribe(TerrPacketType.RequestPassword, packet =>
             {

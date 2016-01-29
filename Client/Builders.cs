@@ -67,6 +67,7 @@ namespace TerrariaBridge.Client
         public void Player(Action<PlayerDataBuilder> builder) => builder(new PlayerDataBuilder(Outval.PlayerData = new Player()));
         public void Password(string pass) => Outval.Password = pass;
         public void TerrariaVersion(string version) => Outval.TerrariaVersion = version;
+        public void ItemTable(string dir) => Outval.ItemTableDir = dir;
 
         public TerrariaClientConfigBuilder(TerrariaClientConfig outval) : base(outval)
         {

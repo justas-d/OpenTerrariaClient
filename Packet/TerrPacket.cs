@@ -1,4 +1,5 @@
 ﻿using System;
+using TerrariaBridge.Client;
 
 namespace TerrariaBridge.Packet
 {
@@ -7,8 +8,10 @@ namespace TerrariaBridge.Packet
         private const byte Index_PacketId = 2;
         private const byte Index_Payload = 3;
 
-        private const byte Size_Length = sizeof(ushort);
-        private const byte Size_PacketId = sizeof(byte);
+        private const byte Size_Length = sizeof (ushort);
+        private const byte Size_PacketId = sizeof (byte);
+
+        public const byte MinPacketSize = Size_PacketId + Size_Length;
 
         public ushort Length { get; private set; }
         public TerrPacketType Type { get; private set; }
@@ -19,24 +22,30 @@ namespace TerrariaBridge.Packet
 
         }
 
-        public static ushort GetSize(byte[] data) => BitConverter.ToUInt16(data, 0);
-        public static TerrPacketType GetType(byte[] data) => (TerrPacketType) data[Index_PacketId];
+        public static ushort GetSize(byte[] data)
+            => (ushort) (data.Length >= sizeof (ushort) ? BitConverter.ToUInt16(data, 0) : 0);
 
-        public static TerrPacket Parse(byte[] data, int length) => Parse(data, length, GetSize(data));
+        public static TerrPacketType GetType(byte[] data)
+            =>
+                data.Length >= sizeof (ushort) + sizeof (byte)
+                    ? (TerrPacketType) data[Index_PacketId]
+                    : TerrPacketType.None;
 
-        public static TerrPacket Parse(byte[] data)
+        public static TerrPacket Parse(byte[] data, int length, TerrariaClient client) => Parse(data, length, GetSize(data), client.Log);
+
+        public static TerrPacket Parse(byte[] data, TerrariaClient client)
         {
             ushort packetSize = GetSize(data);
-            return Parse(data, packetSize, packetSize);
+            return Parse(data, packetSize, packetSize, client.Log);
         }
 
-        private static TerrPacket Parse(byte[] data, int expectedLength, ushort packetProvidedLength)
+        private static TerrPacket Parse(byte[] data, int expectedLength, ushort packetProvidedLength, Logger log)
         {
             if (expectedLength != packetProvidedLength)
             {
                 if (GetType(data) == TerrPacketType.SendSection)
                 {
-                    Console.WriteLine("Dropped send section");
+                    log.Critical("Dropped send section in Parse");
                     return null;
                 }
 
@@ -48,7 +57,13 @@ namespace TerrariaBridge.Packet
                   probably means incomplete packet, not sure if this even happens
                 */
 
-                Console.WriteLine($"Expected != provided: {expectedLength} != {packetProvidedLength}");
+                log.Critical($"Expected != provided: {expectedLength} != {packetProvidedLength} in Parse");
+                return null;
+            }
+
+            if (packetProvidedLength == 0)
+            {
+                log.Critical($"Received 0 length data buffer in Parse.");
                 return null;
             }
 
@@ -97,7 +112,7 @@ namespace TerrariaBridge.Packet
         /// <returns>A new byte array containing the bytes of the packet.</returns>
         public static byte[] Create(TerrPacketType type, byte[] payload)
         {
-            byte[] packet = PayloadlessToPayloadPacket(Create(type), (short)payload.Length);
+            byte[] packet = PayloadlessToPayloadPacket(Create(type), (short) payload.Length);
 
             //Set payload
             Buffer.BlockCopy(payload, 0, packet, Index_Payload, payload.Length);
@@ -119,7 +134,7 @@ namespace TerrariaBridge.Packet
             Buffer.BlockCopy(BitConverter.GetBytes(packetLength), 0, packet, 0, Size_Length);
 
             //set the type
-            packet[Index_PacketId] = (byte)type;
+            packet[Index_PacketId] = (byte) type;
 
             return packet;
         }

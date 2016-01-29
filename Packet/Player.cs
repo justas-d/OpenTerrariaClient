@@ -119,6 +119,9 @@ namespace TerrariaBridge.Packet
             }
         }
 
+        ///<summary>Gets whether this player is the server represented as a player. (PlayerId == 0xff)</summary>
+        public bool IsServer => PlayerId == 0xff;
+
         public PlayerAppearance Appearance { get; internal set; }
         public ValPidPair<short> Health { get; internal set; }
         public ValPidPair<short> Mana { get; internal set; }

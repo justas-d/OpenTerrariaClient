@@ -5,11 +5,19 @@ namespace TerrariaBridge.Client
 {
     public sealed class MessageReceivedEventArgs : EventArgs
     {
+        public enum SenderType
+        {
+            Player,
+            Server
+        }
+        
         public ChatMessage Message { get; }
+        public SenderType Sender { get; }
 
-        public MessageReceivedEventArgs(ChatMessage msg)
+        public MessageReceivedEventArgs(ChatMessage msg, SenderType sender)
         {
             Message = msg;
+            Sender = sender;
         }
     }
 
@@ -40,6 +48,15 @@ namespace TerrariaBridge.Client
         public LoggedInEventArgs(byte pid)
         {
             PlayerId = pid;
+        }
+    }
+    public sealed class StatusReceivedEventArgs : EventArgs
+    {
+        public Status Status { get; }
+
+        public StatusReceivedEventArgs(Status status)
+        {
+            Status = status;
         }
     }
 }

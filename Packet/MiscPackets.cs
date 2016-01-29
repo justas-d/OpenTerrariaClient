@@ -479,15 +479,8 @@ namespace TerrariaBridge.Packet
 
         static ValPair()
         {
-            try
-            {
-                if (!GenericByteConverter.IsValidType(typeof (T)))
-                    throw new NotSupportedException($"{typeof (T)} is not a supported ValPair type.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+            if (!GenericByteConverter.IsValidType(typeof (T)))
+                throw new NotSupportedException($"{typeof (T)} is not a supported ValPair type.");
         }
 
         protected override void WritePayload(BinaryWriter writer)
