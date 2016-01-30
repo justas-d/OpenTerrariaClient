@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using TerrariaBridge.Packet;
 
-namespace TerrariaBridge.Packet
+namespace TerrariaBridge.Model
 {
     /// <summary>
     /// Defines a player appearance packet payload, not including the player id which should be provided before this data in the payload.
@@ -65,7 +66,7 @@ namespace TerrariaBridge.Packet
                     writer.Write((byte) prop.GetValue(this));
 
                 else if (prop.PropertyType == typeof (TerrColor))
-                    writer.Write(((TerrColor) prop.GetValue(this)).CreatePayload());
+                    writer.Write(((TerrColor) prop.GetValue(this)).GetBytes());
 
                 else if (prop.PropertyType == typeof (string))
                     writer.Write((string) prop.GetValue(this));

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.IO;
+using TerrariaBridge.Packet;
 
-namespace TerrariaBridge.Packet
+namespace TerrariaBridge.Model
 {
     public class ChatMessage : PacketWrapper
     {
@@ -21,7 +22,7 @@ namespace TerrariaBridge.Packet
         protected override void WritePayload(BinaryWriter writer)
         {
             writer.Write(PlayerId);
-            writer.Write(Color.CreatePayload());
+            writer.Write(Color.GetBytes());
             writer.Write(Text);
         }
 

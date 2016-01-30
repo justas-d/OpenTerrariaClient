@@ -1,0 +1,98 @@
+﻿using System;
+using System.IO;
+using StrmyCore;
+using TerrariaBridge.Packet;
+
+namespace TerrariaBridge.Model
+{
+    public sealed class UpdateItemOwner : PacketWrapper
+    {
+        public short ItemId { get; private set; }
+        public byte Owner { get; private set; }
+
+        public UpdateItemOwner(short itemId, byte owner)
+        {
+            ItemId = itemId;
+            Owner = owner;
+        }
+
+        internal UpdateItemOwner() { }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            writer.WriteMany(ItemId, Owner);
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.UpdateItemOwner);
+
+            ItemId = reader.ReadInt16();
+            Owner = reader.ReadByte();
+        }
+    }
+
+    public sealed class RemoveItemOwner : PacketWrapper
+    {
+        public short ItemIndex { get; private set; }
+
+        internal RemoveItemOwner() { }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.RemoveItemOwner);
+
+            ItemIndex = reader.ReadInt16();
+        }
+    }
+
+    ///<summary>Aka UpdateItemDrop</summary>
+    public sealed class WorldItem : PacketWrapper
+    {
+        ///<summary>The unique id for this world item. It is not equal to Item.Id</summary>
+        public short UniqueId { get; private set; }
+        public ValPair<float> Position { get; private set; }
+        public ValPair<float> Velocity { get; private set; }
+        public GameItem Item { get; private set; }
+        public byte NoDelay { get; private set; }
+        public byte Owner { get; internal set; }
+
+        internal WorldItem() { }
+
+        public WorldItem(GameItem item, short itemId, ValPair<float> position, byte noDelay,  ValPair<float> velocity = null)
+        {
+            UniqueId = itemId;
+            Position = position;
+            Velocity = velocity ?? new ValPair<float>(0, 0);
+            NoDelay = noDelay;
+            Item = item;
+        }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            writer.Write(UniqueId);
+            writer.Write(Position);
+            writer.Write(Velocity);
+            writer.WriteMany(Item.Stack, Item.Prefix, NoDelay, Item.Id);
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
+
+            Item = new GameItem();
+            UniqueId = reader.ReadByte();
+            Position = new ValPair<float>(reader);
+            Velocity = new ValPair<float>(reader);
+            Item.Stack = reader.ReadInt16();
+            Item.Prefix = reader.ReadByte();
+            NoDelay = reader.ReadByte();
+            Item.Id = reader.ReadInt16();
+        }
+    }
+}

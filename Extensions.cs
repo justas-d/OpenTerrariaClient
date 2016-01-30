@@ -3,6 +3,7 @@ using System.IO;
 using StrmyCore;
 using TerrariaBridge.Client;
 using TerrariaBridge.Client.Service;
+using TerrariaBridge.Model;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge

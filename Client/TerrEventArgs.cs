@@ -1,4 +1,5 @@
 ﻿using System;
+using TerrariaBridge.Model;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Client

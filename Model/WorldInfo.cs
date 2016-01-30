@@ -1,7 +1,8 @@
 ﻿using System;
 using System.IO;
+using TerrariaBridge.Packet;
 
-namespace TerrariaBridge.Packet
+namespace TerrariaBridge.Model
 {
     public sealed class WorldInfo : PacketWrapper
     {
@@ -52,7 +53,7 @@ namespace TerrariaBridge.Packet
         public sbyte InvasionType { get; private set; }
         public ulong LobbyId { get; private set; }
 
-        public WorldInfo() { }
+        internal WorldInfo() { }
 
         protected override void WritePayload(BinaryWriter writer)
         {

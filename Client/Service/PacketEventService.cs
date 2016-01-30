@@ -37,5 +37,11 @@ namespace TerrariaBridge.Client.Service
             else
                 throw new ArgumentException($"{type} is not a valid TerrPacketType type.");
         }
+
+        public void SubscribeMany(OnPacketReceivedEvent evnt, params TerrPacketType[] types)
+        {
+            foreach(TerrPacketType type in types)
+                Subscribe(type, evnt);
+        }
     }
 }

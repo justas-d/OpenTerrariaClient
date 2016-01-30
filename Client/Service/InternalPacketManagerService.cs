@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using TerrariaBridge.Model;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Client.Service
@@ -41,11 +42,11 @@ namespace TerrariaBridge.Client.Service
             _events.Subscribe(TerrPacketType.SetInventory, packet =>
             {
 
-                PlayerItem setItem = PacketWrapper.Parse<PlayerItem>(packet);
+                GameItem setItem = PacketWrapper.Parse<GameItem>(packet);
                 Player player = _client.GetPlayer(setItem.PlayerId.Value);
 
                 if (player.Inventory == null)
-                    player.Inventory = new Player.PlayerInventory();
+                    player.Inventory = new PlayerInventory();
 
                 player.Inventory.InternalItems[setItem.SlotId.Value] = setItem;
             });
@@ -69,7 +70,7 @@ namespace TerrariaBridge.Client.Service
             });
             _events.Subscribe(TerrPacketType.UpdatePlayerBuff, packet =>
             {
-                Player.BuffList buffs = PacketWrapper.Parse<Player.BuffList>(packet);
+                BuffList buffs = PacketWrapper.Parse<BuffList>(packet);
                 Player player = _client.GetPlayer(buffs.PlayerId.Value);
 
                 player.Buffs = buffs;
@@ -116,9 +117,26 @@ namespace TerrariaBridge.Client.Service
             _events.Subscribe(TerrPacketType.RemoveItemOwner, packet =>
             {
                 RemoveItemOwner remItemOwner = PacketWrapper.Parse<RemoveItemOwner>(packet);
+                _client.UpdateItemOwner(remItemOwner.ItemIndex, Byte.MaxValue);
                 // send an update item owner sync packet with the item id from the remove owner packet and a player id of 0xff.
-                client.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(remItemOwner.ItemIndex, 0xff));
+               // client.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(remItemOwner.ItemIndex, 0xff));
             });
+            _events.Subscribe(TerrPacketType.TogglePvp, packet =>
+            {
+                TogglePvp pvpState = PacketWrapper.Parse<TogglePvp>(packet);
+                Player player = _client.GetPlayer(pvpState.PlayerId);
+                player.IsPvp = pvpState.Value;
+            });
+            _events.Subscribe(TerrPacketType.UpdateItemOwner, packet =>
+            {
+                UpdateItemOwner updateOwner = PacketWrapper.Parse<UpdateItemOwner>(packet);
+                _client.UpdateItemOwner(updateOwner.ItemId, updateOwner.Owner);
+            });
+            _events.SubscribeMany(packet =>
+            {
+                WorldItem itemDrop = PacketWrapper.Parse<WorldItem>(packet);
+                _client.OverwriteItem(itemDrop);
+            }, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
         }
 
         private void SendLoginPackets()
@@ -140,7 +158,7 @@ namespace TerrariaBridge.Client.Service
                     _client.CurrentPlayer.Buffs.CreatePayload());
 
             if (_client.CurrentPlayer.Inventory != null)
-                for (byte i = 0; i < Player.PlayerInventory.InventorySize; i++)
+                for (byte i = 0; i < PlayerInventory.InventorySize; i++)
                     _client.Send(TerrPacketType.SetInventory,
                         _client.CurrentPlayer.Inventory.InternalItems[i].CreatePayload());
 

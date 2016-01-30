@@ -1,20 +1,21 @@
 ﻿using System;
 using System.IO;
+using TerrariaBridge.Packet;
 
-namespace TerrariaBridge.Packet
+namespace TerrariaBridge.Model
 {
-    public class PlayerItem : PacketWrapper
+    public class GameItem : PacketWrapper
     {
         internal byte? PlayerId { get; set; }
         internal byte? SlotId { get; set; }
 
-        public short Stack { get; private set; }
-        public byte Prefix { get; private set; }
-        public short Id { get; private set; }
+        public short Stack { get; internal set; }
+        public byte Prefix { get; internal set; }
+        public short Id { get; internal set; }
 
-        internal PlayerItem() { }
+        internal GameItem() { }
 
-        internal PlayerItem(PlayerItem value)
+        internal GameItem(GameItem value)
         {
             PlayerId = value.PlayerId;
             SlotId = value.SlotId;
@@ -23,7 +24,7 @@ namespace TerrariaBridge.Packet
             Id = value.Id;
         }
 
-        public PlayerItem(short id = 0, short stack = 0, byte prefix = 0)
+        public GameItem(short id = 0, short stack = 0, byte prefix = 0)
         {
             Id = id;
             Stack = stack;

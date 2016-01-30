@@ -1,4 +1,5 @@
 ﻿using System;
+using TerrariaBridge.Model;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Client
@@ -17,6 +18,15 @@ namespace TerrariaBridge.Client
             return Outval;
         }
     }
+
+    //public sealed class BuffBuilder : ClassBuilder<Player.BuffList>
+    //{
+    //    public void Add(byte id) => Outval.InternalBuffs
+
+    //    public BuffBuilder(Player.BuffList outval) : base(outval)
+    //    {
+    //    }
+    //}
 
     public sealed class PlayerAppearanceBuilder : ClassBuilder<PlayerAppearance>
     {
@@ -50,8 +60,8 @@ namespace TerrariaBridge.Client
         public void Health(short current, short max) => Outval.Health = new ValPidPair<short>(current, max);
         public void Mana(short value) => Outval.Mana = new ValPidPair<short>(value, value);
         public void Mana(short current, short max) => Outval.Mana = new ValPidPair<short>(current, max);
-        public void Buffs(Player.BuffList buffs) => Outval.Buffs = buffs;
-        public void Inventory(Player.PlayerInventory inv) => Outval.Inventory = inv;
+        public void Buffs(BuffList buffs) => Outval.Buffs = buffs;
+        public void Inventory(PlayerInventory inv) => Outval.Inventory = inv;
 
         public PlayerDataBuilder(Player outval) : base(outval)
         {
@@ -71,7 +81,7 @@ namespace TerrariaBridge.Client
         public void BuffTable(string dir) => Outval.BuffTable = dir;
         public void NpcTable(string dir) => Outval.NpcTable = dir;
         public void InvasionTable(string dir) => Outval.InvasionTable= dir;
-        public void ProjectileTable(string dir) => Outval.ProjectileTable= dir;
+        public void ProjectileTable(string dir) => Outval.ProjectileTable = dir;
 
         public TerrariaClientConfigBuilder(TerrariaClientConfig outval) : base(outval)
         {

@@ -1,10 +1,10 @@
-﻿namespace TerrariaBridge.Packet
+﻿namespace TerrariaBridge.Model
 {
     public struct TerrColor
     {
         public byte R { get; }
         public byte G { get; }
-        public byte B { get; }
+        public byte B { get;  }
 
         public TerrColor(byte r, byte g, byte b)
         {
@@ -13,6 +13,6 @@
             B = b;
         }
 
-        public byte[] CreatePayload() => new[] { R, G, B };
+        public byte[] GetBytes() => new[] {R, G, B};
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using TerrariaBridge.Model;
 
 namespace TerrariaBridge.Packet
 {

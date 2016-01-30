@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
-using StrmyCore;
 using TerrariaBridge.Client.Service;
+using TerrariaBridge.Model;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Client
@@ -15,11 +15,12 @@ namespace TerrariaBridge.Client
         private readonly Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private readonly ManualResetEvent _disconnectEvent = new ManualResetEvent(false);
         private readonly ConcurrentDictionary<byte, Player> _players = new ConcurrentDictionary<byte, Player>();
+        private readonly ConcurrentDictionary<short, WorldItem> _items = new ConcurrentDictionary<short, WorldItem>();
 
         private const int BufferSize = 0x1FFFE;
         public const byte ServerPlayerId = byte.MaxValue;
 
-        private Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) { PlayerId = ServerPlayerId };
+        private Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) {PlayerId = ServerPlayerId};
 
         public Logger Log { get; } = new Logger();
 
@@ -37,7 +38,6 @@ namespace TerrariaBridge.Client
         public IEnumerable<Player> Players => _players.Values;
         ///<summary>Returns the player that the bot appears as.</summary>
         public CurrentPlayer CurrentPlayer { get; private set; }
-
         ///<summary>Returns the latest information about the terraria world the server provided to the bot.</summary>
         public WorldInfo World { get; internal set; }
 
@@ -108,6 +108,8 @@ namespace TerrariaBridge.Client
             this.Send(TerrPacketType.ConnectRequest, Config.TerrariaVersion);
         }
 
+        #region Player
+
         internal bool RemovePlayer(byte pid)
         {
             if (!_players.ContainsKey(pid)) return false;
@@ -141,12 +143,77 @@ namespace TerrariaBridge.Client
 
             if (playerId == ServerPlayerId) return ServerDummyPlayer;
 
+            if (!_players.ContainsKey(playerId)) return null;
+
             Player retval;
             _players.TryGetValue(playerId, out retval);
             return retval;
         }
 
         internal Player GetPlayer(byte pid) => GetExistingPlayer(pid) ?? RegisterPlayer(pid);
+
+        #endregion
+
+        #region Item
+
+        internal void UpdateItemOwner(short id, byte owner)
+        {
+            GetExistingItem(id).Owner = owner;
+            this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(id, owner));
+        }
+
+        internal void OverwriteItem(WorldItem item)
+        {
+            RemoveItem(item.UniqueId);
+            RegisterItem(item);
+          //  this.Send(TerrPacketType.UpdateItemDrop, item);
+        }
+
+        internal bool RemoveItem(short id)
+        {
+            if (_items.ContainsKey(id)) return false;
+
+            WorldItem ignored;
+            _items.TryRemove(id, out ignored);
+
+            Log.Info($"Removed item id {id}");
+            return false;
+        }
+
+        internal bool RegisterItem(WorldItem item) => RegisterItem(item.UniqueId, item);
+
+        private bool RegisterItem(short id, WorldItem item)
+        {
+            if (_items.ContainsKey(id)) return false;
+
+            _items.TryAdd(id, item);
+            Log.Info($"Registered {item.Item.Id} as id {id}");
+            return true;
+        }
+
+        public WorldItem GetExistingItem(short id)
+        {
+            if (!_items.ContainsKey(id)) return null;
+
+            WorldItem retval;
+            _items.TryGetValue(id, out retval);
+            return retval;
+        }
+
+        internal WorldItem GetItem(WorldItem item)
+            => GetItem(item.UniqueId, item);
+
+        private WorldItem GetItem(short id, WorldItem item)
+        {
+            WorldItem existing = GetExistingItem(id);
+            if (existing != null)
+                return existing;
+
+            RegisterItem(item);
+            return item;
+        }
+
+        #endregion
 
         #region Socket
 
@@ -163,8 +230,13 @@ namespace TerrariaBridge.Client
                     {
                         _socket.EndSend(ar);
                     }
-                    catch (SocketException ex) { SetDisconnectState($"SocketException: {ex}"); }
-                    catch (ObjectDisposedException) { }
+                    catch (SocketException ex)
+                    {
+                        SetDisconnectState($"SocketException: {ex}");
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
                     // the catch below doesn't apply for this lambda for some reason
                 }, null);
             }
@@ -231,7 +303,8 @@ namespace TerrariaBridge.Client
                                 if (packetBuffer.Length != packetLength)
                                 {
                                     incompletePacketsLength += packetBuffer.Length;
-                                    Log.Info($"Incomplete packet in packetBuffer. Type {TerrPacket.GetType(packetBuffer)} Sizes: expected {packetLength} actual: {packetBuffer.Length} Adding to incomplete packet buffer");
+                                    Log.Info(
+                                        $"Incomplete packet in packetBuffer. Type {TerrPacket.GetType(packetBuffer)} Sizes: expected {packetLength} actual: {packetBuffer.Length} Adding to incomplete packet buffer");
 
                                     if (incompletePacketBuffer == null)
                                         incompletePacketBuffer = new byte[BufferSize];
@@ -252,7 +325,7 @@ namespace TerrariaBridge.Client
                                 {
                                     if (packetLength >= TerrPacket.MinPacketSize)
                                         OnPacketReceived(TerrPacket.Parse(packetBuffer, this));
-                                    else  // this is rare but when it happens it breaks receiving.
+                                    else // this is rare but when it happens it breaks receiving.
                                         Log.Critical($"Received packet under min size: {packetLength}");
                                 }
                             }
@@ -262,7 +335,8 @@ namespace TerrariaBridge.Client
                     {
                         // not a full packet in buffer, fuck it
                         // havent hit this with a critical packet (SendSections have hit it but fuck them)
-                        Log.Warning($"Malformed packet. Parsed type {TerrPacket.GetType(buffer)}. Sizes: expected {packetProvidedLength, -5} received {bytesReceived}");
+                        Log.Warning(
+                            $"Malformed packet. Parsed type {TerrPacket.GetType(buffer)}. Sizes: expected {packetProvidedLength,-5} received {bytesReceived}");
                     }
                     BeginReceive(incompletePacketBuffer);
 
