@@ -8,7 +8,7 @@ namespace TerrariaBridge.Model
     {
         public byte PlayerId { get; private set; }
         public TerrColor Color { get; private set; }
-        public string Text { get; private set; }
+        public string Text { get; internal set; }
 
         internal ChatMessage() { }
 

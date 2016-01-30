@@ -10,7 +10,7 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Client
 {
-    public partial class TerrariaClient
+    public partial class TerrariaClient : IDisposable
     {
         private readonly Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private readonly ManualResetEvent _disconnectEvent = new ManualResetEvent(false);
@@ -392,5 +392,11 @@ namespace TerrariaBridge.Client
         public void Wait() => _disconnectEvent.WaitOne();
 
         #endregion
+
+        public void Dispose()
+        {
+            Disconnect("TerrariaClient Dispose()");
+            _socket?.Dispose();
+        }
     }
 }

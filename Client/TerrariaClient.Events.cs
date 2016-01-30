@@ -24,7 +24,11 @@ namespace TerrariaBridge.Client
         }
 
         internal void OnMessageReceived(ChatMessage msg, MessageReceivedEventArgs.SenderType sender)
-            => MessageReceived(this, new MessageReceivedEventArgs(msg, sender, GetPlayer(msg.PlayerId)));
+        {
+            if (msg.PlayerId == CurrentPlayer.PlayerId) return;
+            if (msg.PlayerId == byte.MaxValue) msg.Text = msg.Text.Replace("<Server>", "");
+            MessageReceived(this, new MessageReceivedEventArgs(msg, sender, GetPlayer(msg.PlayerId)));
+        }
 
         internal void OnStatusReceived(Status status) => StatusReceived(this, new StatusReceivedEventArgs(status));
     }
