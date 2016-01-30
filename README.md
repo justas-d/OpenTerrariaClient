@@ -17,4 +17,15 @@ Tshock support hasn't been tested and is not planned.
 * A Terraria server to connect to
 
 # Usage
-Refer to https://github.com/SSStormy/TerrariaBridgeTests/blob/master/Program.cs
+We have no docs at the moment. Refer to these implementations instead:
+https://github.com/SSStormy/TerrariaBridgeTests/blob/master/Program.cs
+https://github.com/SSStormy/Stormbot/blob/master/Bot.Core/Modules/TerrariaModule.cs
+
+# Big thanks
+Without some public resources and people this wouldn't have been possible.
+Thanks to:
+* The TShock team, for https://tshock.atlassian.net/wiki/display/TSHOCKPLUGINS/Packet+Documentation
+* Seancode, for http://seancode.com/terrafirma/net.html
+* Voltana (RogueException), for introducing me to various design patterns I've never seen
+* destruc7i0n, for inspiring me to make this in the first place
+* X-tis and Rebbit for testing.
