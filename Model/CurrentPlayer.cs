@@ -78,5 +78,11 @@ namespace TerrariaBridge.Model
             else
                 Client.Send(TerrPacketType.TogglePvp, new TogglePvp(PlayerId.Value, state.Value));
         }
+
+        public void SetPos(ValPair<float> pos)
+        {
+            Position = pos;
+            Client.Send(TerrPacketType.UpdatePlayer, new UpdatePlayer(this));
+        }
     }
 }

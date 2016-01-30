@@ -158,36 +158,44 @@ namespace TerrariaBridge.Client
 
         internal void UpdateItemOwner(short id, byte owner)
         {
-            GetExistingItem(id).Owner = owner;
-            this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(id, owner));
+            WorldItem item = GetExistingItem(id);
+
+            if (item != null)
+            {
+                item.Owner = owner;
+                this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(id, owner));
+            }
         }
 
         internal void OverwriteItem(WorldItem item)
         {
-            RemoveItem(item.UniqueId);
-            RegisterItem(item);
-          //  this.Send(TerrPacketType.UpdateItemDrop, item);
+            RemoveItem(item.UniqueId, false);
+            RegisterItem(item.UniqueId, item, false);
+           // this.Send(TerrPacketType.UpdateItemDrop, item);
         }
 
-        internal bool RemoveItem(short id)
+        internal bool RemoveItem(short id, bool log = true)
         {
             if (_items.ContainsKey(id)) return false;
 
             WorldItem ignored;
             _items.TryRemove(id, out ignored);
 
-            Log.Info($"Removed item id {id}");
+            if(log)
+                Log.Info($"Removed item id {id}");
             return false;
         }
 
         internal bool RegisterItem(WorldItem item) => RegisterItem(item.UniqueId, item);
 
-        private bool RegisterItem(short id, WorldItem item)
+        private bool RegisterItem(short id, WorldItem item, bool log = true)
         {
             if (_items.ContainsKey(id)) return false;
 
             _items.TryAdd(id, item);
-            Log.Info($"Registered {item.Item.Id} as id {id}");
+
+            if(log)
+                Log.Info($"Registered {item.Item.Id} as id {id}");
             return true;
         }
 
@@ -296,15 +304,27 @@ namespace TerrariaBridge.Client
                             while (reader.BaseStream.Position <= reader.BaseStream.Length - sizeof (ushort))
                             {
                                 ushort packetLength = reader.ReadUInt16();
+                                if (packetLength <= 0)
+                                {
+                                    Log.Warning($"Corrupted packetbuffer, read packet length of {packetLength}");
+                                    break;
+                                }
                                 reader.BaseStream.Position -= sizeof (ushort);
 
                                 byte[] packetBuffer = reader.ReadBytes(packetLength);
 
                                 if (packetBuffer.Length != packetLength)
                                 {
+                                    TerrPacketType type = TerrPacket.GetType(packetBuffer);
                                     incompletePacketsLength += packetBuffer.Length;
                                     Log.Info(
-                                        $"Incomplete packet in packetBuffer. Type {TerrPacket.GetType(packetBuffer)} Sizes: expected {packetLength} actual: {packetBuffer.Length} Adding to incomplete packet buffer");
+                                        $"Incomplete packet in packetBuffer. Type {type} Sizes: expected {packetLength} actual: {packetBuffer.Length} Adding to incomplete packet buffer");
+
+                                    if (type == TerrPacketType.SendSection)
+                                    {
+                                        Log.Info("Dropped send secion packet.");
+                                        continue;
+                                    }
 
                                     if (incompletePacketBuffer == null)
                                         incompletePacketBuffer = new byte[BufferSize];

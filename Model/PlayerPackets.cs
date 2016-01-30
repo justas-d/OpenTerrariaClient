@@ -137,6 +137,16 @@ namespace TerrariaBridge.Model
 
         internal UpdatePlayer() { }
 
+        internal UpdatePlayer(CurrentPlayer player)
+        {
+            PlayerId = player.PlayerId.Value;
+            Control = player.Control;
+            Pulley = player.Pulley;
+            SelectedItem = player.SelectedItem;
+            Position = player.Position ?? new ValPair<float>(0, 0);
+            Velocity = player.Velocity ?? new ValPair<float>(0, 0);
+        }
+
         protected override void WritePayload(BinaryWriter writer)
         {
             writer.WriteMany(PlayerId, Control, Pulley, SelectedItem);

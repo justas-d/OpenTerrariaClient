@@ -89,6 +89,8 @@ namespace TerrariaBridge.Client.Service
                 player.Position = update.Position;
                 player.Velocity = update.Velocity;
                 player.SelectedItem = update.SelectedItem;
+                player.Control = update.Control;
+                player.Pulley = update.Pulley;
             });
             _events.Subscribe(TerrPacketType.PlayerActive, packet =>
             {

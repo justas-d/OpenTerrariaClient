@@ -49,6 +49,8 @@ namespace TerrariaBridge.Model
         public bool IsPvp { get; internal set; }
 
         public byte SelectedItem { get; internal set; }
+        public byte Pulley { get; internal set; }
+        public byte Control { get; internal set; }
 
         internal TerrariaClient Client { get; set; }
 
