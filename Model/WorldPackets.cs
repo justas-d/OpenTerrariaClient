@@ -4,9 +4,33 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
+    public sealed class WorldTime : PacketWrapper
+    {
+        public bool IsDay { get; private set; }
+        public int Time { get; private set; }
+        public short SunModY { get; private set; }
+        public short MoonModY { get; private set; }
+
+        internal WorldTime() { }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.Time);
+            IsDay = reader.ReadBoolean();
+            Time = reader.ReadInt32();
+            SunModY = reader.ReadInt16();
+            MoonModY = reader.ReadInt16();
+        }
+    }
+
     public sealed class WorldInfo : PacketWrapper
     {
-        public int Time { get; private set; }
+        public int Time { get; internal set; }
         public byte DayMoonInfo { get; private set; }
         public byte MoonPhase { get; private set; }
         public short MaxTilesX { get; private set; }
@@ -52,6 +76,10 @@ namespace TerrariaBridge.Model
         public byte EventInfo4 { get; private set; }
         public sbyte InvasionType { get; private set; }
         public ulong LobbyId { get; private set; }
+
+        public bool IsDay { get; internal set; }
+        public short SunModY { get; internal set; }
+        public short MoonModY { get; internal set; }
 
         internal WorldInfo() { }
 

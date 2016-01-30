@@ -1,10 +1,19 @@
 ﻿using TerrariaBridge.Client;
-using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
     public class Player
     {
+        public enum TeamType : byte
+        {
+            None = 0,
+            Red = 1,
+            Green = 2,
+            Blue = 3,
+            Yellow = 4,
+            Pink,
+        }
+
         private const int DefaultHp = 100;
         private const int DefaultMana = 10;
 
@@ -35,7 +44,7 @@ namespace TerrariaBridge.Model
         }
 
         ///<summary>Gets whether this player is the server represented as a player.</summary>
-        public bool IsServer => PlayerId == 0xff;
+        public bool IsServer => PlayerId == byte.MaxValue;
 
         public PlayerAppearance Appearance { get; internal set; }
         public ValPidPair<short> Health { get; internal set; }
@@ -51,6 +60,7 @@ namespace TerrariaBridge.Model
         public byte SelectedItem { get; internal set; }
         public byte Pulley { get; internal set; }
         public byte Control { get; internal set; }
+        public Player.TeamType Team { get; internal set; }
 
         internal TerrariaClient Client { get; set; }
 

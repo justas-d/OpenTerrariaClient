@@ -12,11 +12,15 @@ namespace TerrariaBridge.Model
 
         internal ChatMessage() { }
 
-        internal ChatMessage(byte pid, TerrColor color, string message)
+        internal ChatMessage(byte pid, string message)
         {
             PlayerId = pid;
-            Color = color;
             Text = message;
+        }
+
+        internal ChatMessage(byte pid, TerrColor color, string message) : this(pid, message)
+        {
+            Color = color;
         }
 
         protected override void WritePayload(BinaryWriter writer)

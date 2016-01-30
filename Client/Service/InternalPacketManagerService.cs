@@ -139,6 +139,19 @@ namespace TerrariaBridge.Client.Service
                 WorldItem itemDrop = PacketWrapper.Parse<WorldItem>(packet);
                 _client.OverwriteItem(itemDrop);
             }, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
+            _events.Subscribe(TerrPacketType.PlayerTeam, packet =>
+            {
+                PlayerTeam team = PacketWrapper.Parse<PlayerTeam>(packet);
+                _client.GetPlayer(team.PlayerId).Team = team.Team;
+            });
+            _events.Subscribe(TerrPacketType.Time, packet =>
+            {
+                WorldTime time = PacketWrapper.Parse<WorldTime>(packet);
+                _client.World.Time = time.Time;
+                _client.World.IsDay = time.IsDay;
+                _client.World.SunModY = time.SunModY;
+                _client.World.MoonModY = time.MoonModY;
+            });
         }
 
         private void SendLoginPackets()

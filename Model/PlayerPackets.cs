@@ -5,6 +5,32 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
+    public sealed class PlayerTeam : PacketWrapper
+    {
+        public byte PlayerId { get; private set; }
+        public Player.TeamType Team { get; private set; }
+
+        internal PlayerTeam(byte pid, Player.TeamType team)
+        {
+            PlayerId = pid;
+            Team = team;
+        }
+
+        internal PlayerTeam() { }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            writer.WriteMany(PlayerId, (byte)Team);
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.PlayerTeam);
+            PlayerId = reader.ReadByte();
+            Team = (Player.TeamType)reader.ReadByte();
+        }
+    }
+
     public sealed class HealOtherPlayer : PacketWrapper
     {
         public byte PlayerId { get; private set; }
