@@ -12,21 +12,18 @@ namespace TerrariaBridge.Client
         {
             Outval = outval;
         }
-
-        public virtual T FinalizeBuild()
-        {
-            return Outval;
-        }
     }
 
-    //public sealed class BuffBuilder : ClassBuilder<Player.BuffList>
-    //{
-    //    public void Add(byte id) => Outval.InternalBuffs
+    public sealed class BuffBuilder : ClassBuilder<BuffList>
+    {
+        private byte _currentIndex = 0;
 
-    //    public BuffBuilder(Player.BuffList outval) : base(outval)
-    //    {
-    //    }
-    //}
+        public void Add(byte id) => Outval.InternalBuffs[_currentIndex++] = id;
+
+        public BuffBuilder(BuffList outval) : base(outval)
+        {
+        }
+    }
 
     public sealed class PlayerAppearanceBuilder : ClassBuilder<PlayerAppearance>
     {
@@ -61,6 +58,8 @@ namespace TerrariaBridge.Client
         public void Mana(short value) => Outval.Mana = new ValPidPair<short>(value, value);
         public void Mana(short current, short max) => Outval.Mana = new ValPidPair<short>(current, max);
         public void Buffs(BuffList buffs) => Outval.Buffs = buffs;
+        public void Buffs(Action<BuffBuilder> builder)
+            => builder(new BuffBuilder(Outval.Buffs = new BuffList()));
         public void Inventory(PlayerInventory inv) => Outval.Inventory = inv;
 
         public PlayerDataBuilder(Player outval) : base(outval)
