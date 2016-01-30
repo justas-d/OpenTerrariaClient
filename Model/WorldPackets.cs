@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using TerrariaBridge.Packet;
 
@@ -30,6 +31,8 @@ namespace TerrariaBridge.Model
 
     public sealed class WorldInfo : PacketWrapper
     {
+        public const byte TravelingMerchInvSize = 40;
+
         public int Time { get; internal set; }
         public byte DayMoonInfo { get; private set; }
         public byte MoonPhase { get; private set; }
@@ -80,6 +83,8 @@ namespace TerrariaBridge.Model
         public bool IsDay { get; internal set; }
         public short SunModY { get; internal set; }
         public short MoonModY { get; internal set; }
+
+        public IEnumerable<GameItem> TravellingMerchantItems { get; internal set; }
 
         internal WorldInfo() { }
 

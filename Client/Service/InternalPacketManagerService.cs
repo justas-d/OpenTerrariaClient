@@ -152,6 +152,12 @@ namespace TerrariaBridge.Client.Service
                 _client.World.SunModY = time.SunModY;
                 _client.World.MoonModY = time.MoonModY;
             });
+            _events.Subscribe(TerrPacketType.TravellingMerchantInventory, packet =>
+            {
+                TravellingMerchantInventory travellingMerchant = PacketWrapper.Parse<TravellingMerchantInventory>(packet);
+                _client.World.TravellingMerchantItems = travellingMerchant.Items;
+                _client.Log.Info($"Received traveling merchant inv size: {travellingMerchant.Items.Length}");
+            });
         }
 
         private void SendLoginPackets()

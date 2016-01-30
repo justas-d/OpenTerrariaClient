@@ -54,6 +54,9 @@ namespace TerrariaBridge.Model
             Prefix = reader.ReadByte();
             Id = reader.ReadInt16();
         }
+
+        public override string ToString()
+            => $"[i/p{Prefix}/s{Stack}:{Id}]";
     }
 
     public sealed class UpdateItemOwner : PacketWrapper

@@ -111,7 +111,7 @@ namespace TerrariaBridge.Model
     {
         public const byte Size = 40;
 
-        public byte[] Items { get; private set; }
+        public GameItem[] Items { get; private set; }
 
         internal TravellingMerchantInventory() { }
 
@@ -126,8 +126,8 @@ namespace TerrariaBridge.Model
 
             for (byte i = 0; i < Size; i++)
             {
-                reader.ReadByte(); // skip the inventory slot byte
-                Items[i] = reader.ReadByte(); // and go straight to the item netid.
+                byte slot = reader.ReadByte();
+                Items[i] = new GameItem(reader.ReadByte()) {SlotId = slot};
             }
         }
     }
