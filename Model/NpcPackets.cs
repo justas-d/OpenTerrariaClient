@@ -1,27 +1,89 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using StrmyCore;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
-    public sealed class NpcUpdate : PacketWrapper
+    public sealed class NpcHomeUpdate : PacketWrapper
     {
-        public short NpcId { get; private set; }
+        public short UniqueNpcId { get; private set; }
+        public short HomeTileX { get; private set; }
+        public short HomeTileY { get; private set; }
+        public bool IsHomeless { get; private set; }
+
+        internal NpcHomeUpdate()
+        {
+        }
+
+        public NpcHomeUpdate(short uniqueNpcId, short hometileX, short hometileY, bool isHomeless)
+        {
+            UniqueNpcId = uniqueNpcId;
+            HomeTileX = hometileX;
+            HomeTileY = hometileY;
+            IsHomeless = isHomeless;
+        }
+
+        protected override void WritePayload(BinaryWriter writer)
+            => writer.WriteMany(UniqueNpcId, HomeTileX, HomeTileY, IsHomeless);
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.NpcHomeUpdate);
+
+            UniqueNpcId = reader.ReadInt16();
+            HomeTileX = reader.ReadInt16();
+            HomeTileY = reader.ReadInt16();
+            IsHomeless = reader.ReadByte() != 0;
+        }
+    }
+
+    public sealed class UpdateNpcName : PacketWrapper
+    {
+        public short UniqueNpcId { get; private set; }
+        public string Name { get; private set; }
+
+        internal UpdateNpcName() { }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.UpdateNpcName);
+
+            UniqueNpcId = reader.ReadInt16();
+            Name = reader.ReadString();
+        }
+    }
+
+    ///<summary>Aka npc update</summary>
+    public sealed class Npc : PacketWrapper
+    {
+        public short UniqueId { get; private set; }
         public ValPair<float> Position { get; private set; }
         public ValPair<float> Velocity { get; private set; }
         public byte TargetPlayerId { get; private set; }
         public BitArray Flags { get; private set; }
-        public float[] Ai { get; private set; }
-        public short NpcNetId { get; private set; }
-        public int Life { get; private set; }
-        public byte ReleaseOwner { get; private set; }
+      //public float[] Ai { get; private set; }
+        public short NpcId { get; private set; }
+      //public int Life { get; private set; }
+      //public byte ReleaseOwner { get; private set; }
 
-        internal NpcUpdate()
-        {
-            
-        }
+        public IEnumerable<GameItem> Shop { get; internal set; }
+
+        ///<summary>This is only set for home npcs, null for all others.</summary>
+        public string Name { get; internal set; }
+
+        public bool IsHomeless { get; internal set; }
+        public short HomeTileX { get; internal set; }
+        public short HomeTileY { get; internal set; }
+
+        internal Npc() { }
 
         protected override void WritePayload(BinaryWriter writer)
         {
@@ -32,17 +94,17 @@ namespace TerrariaBridge.Model
         {
             CheckForValidType(type, TerrPacketType.NpcUpdate);
 
-            NpcId = reader.ReadByte();
+            UniqueId = reader.ReadInt16();
             Position = new ValPair<float>(reader);
             Velocity = new ValPair<float>(reader);
             TargetPlayerId = reader.ReadByte();
-            Flags = new BitArray(new[] { reader.ReadByte() });
-
+            Flags = new BitArray(new[] {reader.ReadByte()});
             /* 
                the size of the float[] Ai array is determined by ai flags at indexes 3, 4, 5, 6. 
                Each ai flag sets the ai array size to the previous size + 1. T
                he first one sets the size to 0, we ignore it.
-            */
+            
+               doesn't seem to work for now
 
             byte aiSize = 0;
             if (Flags[3])
@@ -59,9 +121,13 @@ namespace TerrariaBridge.Model
                     Ai[i] = reader.ReadSingle();
             }
 
-            NpcNetId = reader.ReadInt16();
-            Life = reader.ReadInt32();
-            ReleaseOwner = reader.ReadByte();
+            NpcId = reader.ReadInt16();
+            if (reader.BaseStream.Position != reader.BaseStream.Length)
+            {
+                Life = reader.ReadInt32();
+                ReleaseOwner = reader.ReadByte();
+            }
+            */
         }
     }
 

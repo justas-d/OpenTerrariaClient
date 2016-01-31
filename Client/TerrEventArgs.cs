@@ -4,6 +4,16 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Client
 {
+    public sealed class WorldEventBeginEventArgs : EventArgs
+    {
+        public short EventId { get; private set; }
+
+        public WorldEventBeginEventArgs(short eventId)
+        {
+            EventId = eventId;
+        }
+    }
+
     public sealed class MessageReceivedEventArgs : EventArgs
     {
         public enum SenderType

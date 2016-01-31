@@ -16,13 +16,13 @@ namespace TerrariaBridge.Client
         private readonly ManualResetEvent _disconnectEvent = new ManualResetEvent(false);
         private readonly ConcurrentDictionary<byte, Player> _players = new ConcurrentDictionary<byte, Player>();
         private readonly ConcurrentDictionary<short, WorldItem> _items = new ConcurrentDictionary<short, WorldItem>();
+        internal readonly ConcurrentDictionary<short, Npc> _npcs = new ConcurrentDictionary<short, Npc>();
 
         private const int BufferSize = 0x1FFFE;
         public const byte ServerPlayerId = byte.MaxValue;
 
         private Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) {PlayerId = ServerPlayerId};
-
-        public Logger Log { get; } = new Logger();
+        public LogManager Log { get; } = new LogManager();
 
         ///<summary>Returns the configuration data used for this client.</summary>
         public TerrariaClientConfig Config { get; internal set; }
@@ -36,6 +36,10 @@ namespace TerrariaBridge.Client
 
         ///<summary>Returns a list of currently online players on the server.</summary>
         public IEnumerable<Player> Players => _players.Values;
+        ///<summary>Returns a list of items present the world.</summary>
+        public IEnumerable<WorldItem> WorldItems => _items.Values;
+        ///<summary>Returns a list of npcs that are present in the world.</summary>
+        public IEnumerable<Npc> Npcs => _npcs.Values;
         ///<summary>Returns the player that the bot appears as.</summary>
         public CurrentPlayer CurrentPlayer { get; private set; }
         ///<summary>Returns the latest information about the terraria world the server provided to the bot.</summary>
@@ -73,8 +77,15 @@ namespace TerrariaBridge.Client
 
             _socket.BeginConnect(host, port, (ar) =>
             {
-                _socket.EndConnect(ar);
-                connectDone.Set();
+                try
+                {
+                    _socket.EndConnect(ar);
+                    connectDone.Set();
+                }
+                catch (Exception ex)
+                {
+                    Log.Critical($"Couldn't connect to {host}:{port}. {ex}");
+                }
             }, null);
 
             connectDone.WaitOne(Config.TimeoutMs);
@@ -117,7 +128,7 @@ namespace TerrariaBridge.Client
             Player ignored;
             _players.TryRemove(pid, out ignored);
 
-            Log.Warning($"Disconnected: {pid}");
+            Log.Info($"Disconnected: {pid}");
             return true;
         }
 
@@ -167,36 +178,14 @@ namespace TerrariaBridge.Client
             }
         }
 
-        internal void OverwriteItem(WorldItem item)
-        {
-            RemoveItem(item.UniqueId, false);
-            RegisterItem(item.UniqueId, item, false);
-           // this.Send(TerrPacketType.UpdateItemDrop, item);
-        }
+        internal void ItemAddOrUpdate(WorldItem item)
+            => _items.AddOrUpdate(item.UniqueId, item, (oldkey, oldval) => item);
+            // this.Send(TerrPacketType.UpdateItemDrop, item);
 
-        internal bool RemoveItem(short id, bool log = true)
+        internal void RemoveItem(short id)
         {
-            if (_items.ContainsKey(id)) return false;
-
             WorldItem ignored;
             _items.TryRemove(id, out ignored);
-
-            if(log)
-                Log.Info($"Removed item id {id}");
-            return false;
-        }
-
-        internal bool RegisterItem(WorldItem item) => RegisterItem(item.UniqueId, item);
-
-        private bool RegisterItem(short id, WorldItem item, bool log = true)
-        {
-            if (_items.ContainsKey(id)) return false;
-
-            _items.TryAdd(id, item);
-
-            if(log)
-                Log.Info($"Registered {item.Item.Id} as id {id}");
-            return true;
         }
 
         public WorldItem GetExistingItem(short id)
@@ -207,18 +196,26 @@ namespace TerrariaBridge.Client
             _items.TryGetValue(id, out retval);
             return retval;
         }
+        #endregion
 
-        internal WorldItem GetItem(WorldItem item)
-            => GetItem(item.UniqueId, item);
+        #region Npc
 
-        private WorldItem GetItem(short id, WorldItem item)
+        internal void NpcAddOrUpdate(Npc npc)
+           => _npcs.AddOrUpdate(npc.UniqueId, npc, (oldkey, oldval) => npc);
+
+        internal void RemoveNpc(short id)
         {
-            WorldItem existing = GetExistingItem(id);
-            if (existing != null)
-                return existing;
+            Npc ignored;
+            _npcs.TryRemove(id, out ignored);
+        }
 
-            RegisterItem(item);
-            return item;
+        public Npc GetExistingNpc(short id)
+        {
+            if (!_npcs.ContainsKey(id)) return null;
+
+            Npc retval;
+            _npcs.TryGetValue(id, out retval);
+            return retval;
         }
 
         #endregion
@@ -301,18 +298,21 @@ namespace TerrariaBridge.Client
                             // one or more packets in buffer
                             using (BinaryReader reader = new BinaryReader(new MemoryStream(buffer, 0, bytesReceived)))
                             {
-                                while (reader.BaseStream.Position <= reader.BaseStream.Length - sizeof (ushort))
+                                while (reader.BaseStream.Position <= reader.BaseStream.Length - TerrPacket.MinPacketSize)
                                 {
                                     ushort packetLength = reader.ReadUInt16();
+
                                     if (packetLength <= 0)
                                     {
                                         Log.Warning($"Corrupted packetbuffer, read packet length of {packetLength}");
                                         break;
                                     }
+
                                     reader.BaseStream.Position -= sizeof (ushort);
 
                                     byte[] packetBuffer = reader.ReadBytes(packetLength);
 
+                                    // todo : still some corruption due to send sections.
                                     if (packetBuffer.Length != packetLength)
                                     {
                                         TerrPacketType type = TerrPacket.GetType(packetBuffer);
@@ -331,15 +331,6 @@ namespace TerrariaBridge.Client
 
                                         Buffer.BlockCopy(packetBuffer, 0, incompletePacketBuffer,
                                             incompletePacketsLength, packetBuffer.Length);
-                                        /*
-                                    todo : start a thread safe write queue loop in ctor for non thread safe sets
-                                    since every packet should possible be a seperate thread we want as much thread safety as possible and the least amount of locks
-                                    for this i'd say we have a queue of (ref object setobj, object value)
-                                    we iterate through this value on the main loop and set setobj = value.
-                                    if any thread that isint the main thread wants to change a value they'll have to go through this queue. 
-
-                                    this currently is not needed but if we decide to receive immediately after end receiving (which we can't do right now seeing as this method isint thread safe)
-                                    */
                                     }
                                     else
                                     {
@@ -403,7 +394,7 @@ namespace TerrariaBridge.Client
 
         ///<summary>Disposes the socket without calling any disconnect events. Use this you are getting StackOverflowExeceptions by calling Dispose().</summary>
         public void SocketDispose()
-        => _socket?.Dispose();
+            => _socket?.Dispose();
 
         public void Dispose()
         {

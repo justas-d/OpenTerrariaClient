@@ -41,7 +41,7 @@ namespace TerrariaBridge.Packet
             return Parse(data, packetSize, packetSize, client.Log);
         }
 
-        private static TerrPacket Parse(byte[] data, int expectedLength, ushort packetProvidedLength, Logger log)
+        private static TerrPacket Parse(byte[] data, int expectedLength, ushort packetProvidedLength, LogManager log)
         {
             if (expectedLength != packetProvidedLength)
             {

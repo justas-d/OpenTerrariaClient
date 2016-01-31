@@ -5,6 +5,25 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
+    public sealed class SetNpcKillCount : PacketWrapper
+    {
+        public short NpcType { get; private set; }
+        public int KillCount { get; private set; }
+
+        internal SetNpcKillCount() { }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            NpcType = reader.ReadInt16();
+            KillCount = reader.ReadInt32();
+        }
+    }
+
     public sealed class WorldTime : PacketWrapper
     {
         public bool IsDay { get; private set; }
@@ -31,8 +50,6 @@ namespace TerrariaBridge.Model
 
     public sealed class WorldInfo : PacketWrapper
     {
-        public const byte TravelingMerchInvSize = 40;
-
         public int Time { get; internal set; }
         public byte DayMoonInfo { get; private set; }
         public byte MoonPhase { get; private set; }
@@ -84,9 +101,17 @@ namespace TerrariaBridge.Model
         public short SunModY { get; internal set; }
         public short MoonModY { get; internal set; }
 
-        public IEnumerable<GameItem> TravellingMerchantItems { get; internal set; }
+        public Dictionary<short, int> NpcKillCount { get; internal set; } = new Dictionary<short, int>();
 
         internal WorldInfo() { }
+
+        internal void SetNpcKc(SetNpcKillCount kc)
+        {
+            if (!NpcKillCount.ContainsKey(kc.NpcType))
+                NpcKillCount.Add(kc.NpcType, 0);
+
+            NpcKillCount[kc.NpcType] = kc.KillCount;
+        }
 
         protected override void WritePayload(BinaryWriter writer)
         {

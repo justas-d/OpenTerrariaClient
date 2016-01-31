@@ -100,7 +100,7 @@
         KillPortal = 95,
         PlayerTeleportThroughPortal = 96,
         NotifyPlayerNpcKilled = 97,
-        NotifyPlaterOfEvent = 98,
+        NotifyPlayerOfEvent = 98,
         UpdateMinionTarget = 99,
         NpcTeleportThroughPortal = 100,
         UpdateSheildStrengths = 101,

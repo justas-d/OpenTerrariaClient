@@ -85,7 +85,6 @@ namespace TerrariaBridge.Model
             Client.Send(TerrPacketType.UpdatePlayer, new UpdatePlayer(this));
         }
 
-        // todo : maybe add a wrapper for items? [i:400]
         public void SendMessage(string text)
             => Client.Send(TerrPacketType.ChatMessage, new ChatMessage(PlayerId.Value, text));
     }

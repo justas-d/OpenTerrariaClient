@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using StrmyCore;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
+    [DebuggerDisplay("Id = {Id}")]
     public sealed class GameItem : PacketWrapper
     {
         internal byte? PlayerId { get; set; }
@@ -56,7 +59,17 @@ namespace TerrariaBridge.Model
         }
 
         public override string ToString()
-            => $"[i/p{Prefix}/s{Stack}:{Id}]";
+        {
+            StringBuilder builder = new StringBuilder("[i");
+
+            if (Prefix != 0)
+                builder.Append($"/p{Prefix}");
+
+            if (Stack > 1)
+                builder.AppendLine($"/s{Stack}");
+
+            return $"{builder}:{Id}]";
+        }
     }
 
     public sealed class UpdateItemOwner : PacketWrapper
@@ -140,7 +153,7 @@ namespace TerrariaBridge.Model
             CheckForValidType(type, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
 
             Item = new GameItem();
-            UniqueId = reader.ReadByte();
+            UniqueId = reader.ReadInt16();
             Position = new ValPair<float>(reader);
             Velocity = new ValPair<float>(reader);
             Item.Stack = reader.ReadInt16();

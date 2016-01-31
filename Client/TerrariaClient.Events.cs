@@ -12,6 +12,7 @@ namespace TerrariaBridge.Client
         public event EventHandler<PacketReceivedEventArgs> PacketReceived = delegate { };
         public event EventHandler<MessageReceivedEventArgs> MessageReceived = delegate { };
         public event EventHandler<StatusReceivedEventArgs> StatusReceived = delegate { };
+        public event EventHandler<WorldEventBeginEventArgs> WorldEventBegin = delegate { }; 
 
         internal void OnConnected() => Connected(this, EventArgs.Empty);
         internal void OnDisconnected(string reason) => Disconnected(this, new DisconnectEventArgs(reason));
@@ -31,5 +32,6 @@ namespace TerrariaBridge.Client
         }
 
         internal void OnStatusReceived(Status status) => StatusReceived(this, new StatusReceivedEventArgs(status));
+        internal void OnWorldEventBegin(short id) => WorldEventBegin(this, new WorldEventBeginEventArgs(id));
     }
 }

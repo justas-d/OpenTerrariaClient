@@ -23,11 +23,11 @@ namespace TerrariaBridge.Client
         }
     }
 
-    public class Logger
+    public class LogManager
     {
         public event EventHandler<classLogMessageEventArgs> MessageReceived = delegate { };
 
-        internal Logger() { }
+        internal LogManager() { }
 
         private void OnMessageReceived(string message, classLogMessageEventArgs.LogSeverity severity)
             => MessageReceived(this, new classLogMessageEventArgs(message, severity));

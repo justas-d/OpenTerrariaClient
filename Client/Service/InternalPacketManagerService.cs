@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using TerrariaBridge.Model;
+using TerrariaBridge.Model.ID;
 using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Client.Service
@@ -20,11 +22,14 @@ namespace TerrariaBridge.Client.Service
                 throw new NullReferenceException(
                     $"{nameof(client)} doesn't have a valid {typeof (PacketEventService).Name} value.");
 
+            #region Critical
+
             _events.Subscribe(TerrPacketType.Disconnect, packet =>
             {
                 using (PayloadReader reader = new PayloadReader(packet.Payload))
                     client.SetDisconnectState(reader.ReadString());
             });
+
             _events.Subscribe(TerrPacketType.ContinueConnecting, packet =>
             {
                 if (!client.IsLoggingIn) return;
@@ -32,6 +37,19 @@ namespace TerrariaBridge.Client.Service
                 client.OnLoggedIn(packet.Payload[0]);
                 SendLoginPackets();
             });
+
+            _events.Subscribe(TerrPacketType.RequestPassword, packet =>
+            {
+                if (string.IsNullOrEmpty(client.Config.Password))
+                    throw new ArgumentNullException(client.Config.Password);
+
+                client.Send(TerrPacketType.SendPassword, client.Config.Password);
+            });
+
+            #endregion
+
+            #region Player
+
             _events.Subscribe(TerrPacketType.PlayerAppearance, packet =>
             {
                 PlayerAppearance appearance = PacketWrapper.Parse<PlayerAppearance>(packet);
@@ -39,6 +57,7 @@ namespace TerrariaBridge.Client.Service
 
                 player.Appearance = appearance;
             });
+
             _events.Subscribe(TerrPacketType.SetInventory, packet =>
             {
 
@@ -50,10 +69,7 @@ namespace TerrariaBridge.Client.Service
 
                 player.Inventory.InternalItems[setItem.SlotId.Value] = setItem;
             });
-            _events.Subscribe(TerrPacketType.WorldInformation,
-                packet => _client.World = PacketWrapper.Parse<WorldInfo>(packet));
 
-            _events.Subscribe(TerrPacketType.Statusbar, packet => _client.OnStatusReceived(PacketWrapper.Parse<Status>(packet)));
             _events.Subscribe(TerrPacketType.PlayerLife, packet =>
             {
                 ValPidPair<short> lifePair = PacketWrapper.Parse<ValPidPair<short>>(packet);
@@ -61,6 +77,7 @@ namespace TerrariaBridge.Client.Service
 
                 player.Health = lifePair;
             });
+
             _events.Subscribe(TerrPacketType.PlayerMana, packet =>
             {
                 ValPidPair<short> manaPair = PacketWrapper.Parse<ValPidPair<short>>(packet);
@@ -68,6 +85,7 @@ namespace TerrariaBridge.Client.Service
 
                 player.Mana = manaPair;
             });
+
             _events.Subscribe(TerrPacketType.UpdatePlayerBuff, packet =>
             {
                 BuffList buffs = PacketWrapper.Parse<BuffList>(packet);
@@ -75,6 +93,7 @@ namespace TerrariaBridge.Client.Service
 
                 player.Buffs = buffs;
             });
+
             _events.Subscribe(TerrPacketType.AddPlayerBuff, packet =>
             {
                 AddPlayerBuff addPlayerBuff = PacketWrapper.Parse<AddPlayerBuff>(packet);
@@ -82,6 +101,7 @@ namespace TerrariaBridge.Client.Service
                 _client.Log.Info(
                     $"Add player buff pid {addPlayerBuff.PlayerId} buff: {addPlayerBuff.Buff} time: {addPlayerBuff.Time}");
             });
+
             _events.Subscribe(TerrPacketType.UpdatePlayer, packet =>
             {
                 UpdatePlayer update = PacketWrapper.Parse<UpdatePlayer>(packet);
@@ -92,6 +112,7 @@ namespace TerrariaBridge.Client.Service
                 player.Control = update.Control;
                 player.Pulley = update.Pulley;
             });
+
             _events.Subscribe(TerrPacketType.PlayerActive, packet =>
             {
                 PlayerActive active = PacketWrapper.Parse<PlayerActive>(packet);
@@ -100,28 +121,84 @@ namespace TerrariaBridge.Client.Service
                 else
                     client.RemovePlayer(active.PlayerId);
             });
-            _events.Subscribe(TerrPacketType.ChatMessage, packet =>
-            {
-                ChatMessage msg = PacketWrapper.Parse<ChatMessage>(packet);
 
-                client.OnMessageReceived(msg,
-                    client.GetPlayer(msg.PlayerId).IsServer
-                        ? MessageReceivedEventArgs.SenderType.Server
-                        : MessageReceivedEventArgs.SenderType.Player);
-            });
-            _events.Subscribe(TerrPacketType.RequestPassword, packet =>
+            _events.Subscribe(TerrPacketType.PlayerTeam, packet =>
             {
-                if (string.IsNullOrEmpty(client.Config.Password))
-                    throw new ArgumentNullException(client.Config.Password);
-
-                client.Send(TerrPacketType.SendPassword, client.Config.Password);
+                PlayerTeam team = PacketWrapper.Parse<PlayerTeam>(packet);
+                _client.GetPlayer(team.PlayerId).Team = team.Team;
             });
+
+            #endregion
+
+            #region World
+
+            _events.Subscribe(TerrPacketType.WorldInformation,
+                packet => _client.World = PacketWrapper.Parse<WorldInfo>(packet));
+
+            _events.Subscribe(TerrPacketType.Time, packet =>
+            {
+                WorldTime time = PacketWrapper.Parse<WorldTime>(packet);
+                _client.World.Time = time.Time;
+                _client.World.IsDay = time.IsDay;
+                _client.World.SunModY = time.SunModY;
+                _client.World.MoonModY = time.MoonModY;
+            });
+
+            _events.Subscribe(TerrPacketType.NotifyPlayerOfEvent, packet =>
+                _client.OnWorldEventBegin(BitConverter.ToInt16(packet.Payload, 0)));
+
+            _events.Subscribe(TerrPacketType.SetNpcShopItem, packet =>
+            {
+                _client.Log.Info("Received shop item data.");
+            });
+
+            #endregion
+
+            #region Npc
+
+            _events.Subscribe(TerrPacketType.NpcUpdate, packet =>
+            {
+                Npc npc = PacketWrapper.Parse<Npc>(packet);
+                _client.NpcAddOrUpdate(npc);
+            });
+            _events.Subscribe(TerrPacketType.UpdateNpcName, packet =>
+            {
+                UpdateNpcName npcName = PacketWrapper.Parse<UpdateNpcName>(packet);
+                _client.GetExistingNpc(npcName.UniqueNpcId).Name = npcName.Name;
+            });
+            _events.Subscribe(TerrPacketType.TravellingMerchantInventory, packet =>
+            {
+                TravellingMerchantInventory travellingMerchant = PacketWrapper.Parse<TravellingMerchantInventory>(packet);
+
+                // find the traveling merchant in the npc list
+                foreach (var pair in client._npcs.Where(pair => pair.Value.NpcId == NpcId.TravellingMerchant))
+                    pair.Value.Shop = travellingMerchant.Items;
+            });
+            _events.Subscribe(TerrPacketType.SetNpcKillCount,
+                packet => _client.World.SetNpcKc(PacketWrapper.Parse<SetNpcKillCount>(packet)));
+
+            _events.Subscribe(TerrPacketType.NpcHomeUpdate, packet =>
+            {
+                NpcHomeUpdate homeUpdate = PacketWrapper.Parse<NpcHomeUpdate>(packet);
+                Npc npc = _client.GetExistingNpc(homeUpdate.UniqueNpcId);
+                npc.HomeTileX = homeUpdate.HomeTileX;
+                npc.HomeTileY = homeUpdate.HomeTileY;
+                npc.IsHomeless = homeUpdate.IsHomeless;
+            });
+
+            _events.Subscribe(TerrPacketType.NotifyPlayerNpcKilled, packet =>
+                _client.RemoveNpc(BitConverter.ToInt16(packet.Payload, 0)));
+
+            #endregion
+
+            #region Item
+
             _events.Subscribe(TerrPacketType.RemoveItemOwner, packet =>
             {
                 RemoveItemOwner remItemOwner = PacketWrapper.Parse<RemoveItemOwner>(packet);
                 _client.UpdateItemOwner(remItemOwner.ItemIndex, Byte.MaxValue);
                 // send an update item owner sync packet with the item id from the remove owner packet and a player id of 0xff.
-               // client.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(remItemOwner.ItemIndex, 0xff));
+                // client.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(remItemOwner.ItemIndex, 0xff));
             });
             _events.Subscribe(TerrPacketType.TogglePvp, packet =>
             {
@@ -137,27 +214,27 @@ namespace TerrariaBridge.Client.Service
             _events.SubscribeMany(packet =>
             {
                 WorldItem itemDrop = PacketWrapper.Parse<WorldItem>(packet);
-                _client.OverwriteItem(itemDrop);
+                _client.ItemAddOrUpdate(itemDrop);
             }, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
-            _events.Subscribe(TerrPacketType.PlayerTeam, packet =>
+
+            #endregion
+
+            #region Misc
+
+            _events.Subscribe(TerrPacketType.Statusbar,
+                packet => _client.OnStatusReceived(PacketWrapper.Parse<Status>(packet)));
+
+            _events.Subscribe(TerrPacketType.ChatMessage, packet =>
             {
-                PlayerTeam team = PacketWrapper.Parse<PlayerTeam>(packet);
-                _client.GetPlayer(team.PlayerId).Team = team.Team;
+                ChatMessage msg = PacketWrapper.Parse<ChatMessage>(packet);
+
+                client.OnMessageReceived(msg,
+                    client.GetPlayer(msg.PlayerId).IsServer
+                        ? MessageReceivedEventArgs.SenderType.Server
+                        : MessageReceivedEventArgs.SenderType.Player);
             });
-            _events.Subscribe(TerrPacketType.Time, packet =>
-            {
-                WorldTime time = PacketWrapper.Parse<WorldTime>(packet);
-                _client.World.Time = time.Time;
-                _client.World.IsDay = time.IsDay;
-                _client.World.SunModY = time.SunModY;
-                _client.World.MoonModY = time.MoonModY;
-            });
-            _events.Subscribe(TerrPacketType.TravellingMerchantInventory, packet =>
-            {
-                TravellingMerchantInventory travellingMerchant = PacketWrapper.Parse<TravellingMerchantInventory>(packet);
-                _client.World.TravellingMerchantItems = travellingMerchant.Items;
-                _client.Log.Info($"Received traveling merchant inv size: {travellingMerchant.Items.Length}");
-            });
+
+            #endregion
         }
 
         private void SendLoginPackets()
@@ -165,8 +242,7 @@ namespace TerrariaBridge.Client.Service
             _client.Send(TerrPacketType.PlayerAppearance, _client.CurrentPlayer.Appearance.CreatePayload());
 
             if (_client.CurrentPlayer.Guid != null)
-                _client.Send(TerrPacketType.ClientUuid,
-                    Utils.EncodeTerrString(_client.CurrentPlayer.Guid.ToString()));
+                _client.Send(TerrPacketType.ClientUuid, _client.CurrentPlayer.Guid.ToString());
 
             if (_client.CurrentPlayer.Health != null)
                 _client.Send(TerrPacketType.PlayerLife, _client.CurrentPlayer.Health.CreatePayload());
