@@ -159,7 +159,7 @@ namespace TerrariaBridge.Model
             Item.Stack = reader.ReadInt16();
             Item.Prefix = reader.ReadByte();
             NoDelay = reader.ReadByte();
-            Item.Id = reader.ReadInt16(); // todo : we might be reading something wrong here
+            Item.Id = reader.ReadInt16();
         }
     }
 }
