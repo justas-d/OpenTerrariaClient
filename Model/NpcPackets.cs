@@ -7,6 +7,34 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
+    public sealed class SpawnBossOrInvasion : PacketWrapper
+    {
+        public byte PlayerId { get; private set; }
+        public short SpawnId { get; private set; }
+
+        internal SpawnBossOrInvasion() { }
+
+        public SpawnBossOrInvasion(byte pid, short spawnId)
+        {
+            PlayerId = pid;
+            SpawnId = spawnId;
+        }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            writer.Write((short)PlayerId); // for some reason this pid has to be a short.
+            writer.Write(SpawnId);
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.SpawnBossInvsaion);
+
+            PlayerId = (byte)reader.ReadInt16(); // i have no idea why this is a short.
+            SpawnId = reader.ReadInt16();
+        }
+    }
+
     public sealed class NpcHomeUpdate : PacketWrapper
     {
         public short UniqueNpcId { get; private set; }

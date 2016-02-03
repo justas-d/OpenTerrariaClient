@@ -180,7 +180,6 @@ namespace TerrariaBridge.Client
 
         internal void ItemAddOrUpdate(WorldItem item)
             => _items.AddOrUpdate(item.UniqueId, item, (oldkey, oldval) => item);
-            // this.Send(TerrPacketType.UpdateItemDrop, item);
 
         internal void RemoveItem(short id)
         {

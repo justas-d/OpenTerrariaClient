@@ -197,8 +197,6 @@ namespace TerrariaBridge.Client.Service
             {
                 RemoveItemOwner remItemOwner = PacketWrapper.Parse<RemoveItemOwner>(packet);
                 _client.UpdateItemOwner(remItemOwner.ItemIndex, Byte.MaxValue);
-                // send an update item owner sync packet with the item id from the remove owner packet and a player id of 0xff.
-                // client.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(remItemOwner.ItemIndex, 0xff));
             });
             _events.Subscribe(TerrPacketType.TogglePvp, packet =>
             {
