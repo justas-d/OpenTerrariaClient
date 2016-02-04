@@ -19,11 +19,14 @@ namespace TerrariaBridge.Client
         internal readonly ConcurrentDictionary<short, Npc> _npcs = new ConcurrentDictionary<short, Npc>();
 
         private const int BufferSize = 0x1FFFE;
+        private MemoryStream _packetStream = new MemoryStream();
+        private BinaryReader _packetReader;
+        private BinaryWriter _packetWriter;
+
         public const byte ServerPlayerId = byte.MaxValue;
-
         private Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) {PlayerId = ServerPlayerId};
-        public LogManager Log { get; } = new LogManager();
 
+        public LogManager Log { get; } = new LogManager();
         ///<summary>Returns the configuration data used for this client.</summary>
         public TerrariaClientConfig Config { get; internal set; }
         ///<summary>Returns the service manager for this client.</summary>
@@ -45,6 +48,7 @@ namespace TerrariaBridge.Client
         ///<summary>Returns the latest information about the terraria world the server provided to the bot.</summary>
         public WorldInfo World { get; internal set; }
 
+
         internal bool IsLoggingIn;
 
         public TerrariaClient(TerrariaClientConfig config = null)
@@ -61,6 +65,9 @@ namespace TerrariaBridge.Client
 
         private void FinishConstruction()
         {
+            _packetReader = new BinaryReader(_packetStream);
+            _packetWriter = new BinaryWriter(_packetStream);
+
             Services = new ServiceManager(this);
 
             Services.Add<PacketEventService>();
@@ -253,111 +260,20 @@ namespace TerrariaBridge.Client
             }
         }
 
-        private void BeginReceive(object state = null)
+        private void BeginReceive()
         {
             try
             {
-                byte[] incompletePacketBuffer = null;
-                int incompletePacketsLength = 0;
-
                 byte[] buffer = new byte[BufferSize];
-                int packetBufferOffset = 0;
-
-                Tuple<byte[], int> tuple = state as Tuple<byte[], int>;
-
-                if (tuple != null)
+                _socket.BeginReceive(buffer, 0, BufferSize, SocketFlags.None, (ar) =>
                 {
-                    incompletePacketBuffer = tuple.Item1;
-                    incompletePacketsLength = tuple.Item2;
-                }
+                    int bytesRead = _socket.EndReceive(ar);
 
-                if (incompletePacketBuffer != null)
-                {
-                    Buffer.BlockCopy(incompletePacketBuffer, 0, buffer, 0, incompletePacketBuffer.Length);
-                    packetBufferOffset = incompletePacketsLength;
-                    incompletePacketBuffer = null;
-                }
+                    _packetWriter.Write(buffer, 0, bytesRead);
+                    _packetStream.Position = _packetStream.Position - bytesRead;
+                    TryReadPacket();
 
-                _socket.BeginReceive(buffer, packetBufferOffset, BufferSize, SocketFlags.None, (ar) =>
-                {
-                    try
-                    {
-                        int bytesReceived = _socket.EndReceive(ar);
-
-                        if (bytesReceived <= 0)
-                        {
-                            Disconnect("No bytes received");
-                            return;
-                        }
-
-                        ushort packetProvidedLength = TerrPacket.GetSize(buffer);
-
-                        if (bytesReceived >= packetProvidedLength)
-                        {
-                            // one or more packets in buffer
-                            using (BinaryReader reader = new BinaryReader(new MemoryStream(buffer, 0, bytesReceived)))
-                            {
-                                while (reader.BaseStream.Position <= reader.BaseStream.Length - TerrPacket.MinPacketSize)
-                                {
-                                    ushort packetLength = reader.ReadUInt16();
-
-                                    if (packetLength <= 0)
-                                    {
-                                        Log.Warning($"Corrupted packetbuffer, read packet length of {packetLength}");
-                                        break;
-                                    }
-
-                                    reader.BaseStream.Position -= sizeof (ushort);
-
-                                    byte[] packetBuffer = reader.ReadBytes(packetLength);
-
-                                    // todo : still some corruption due to send sections.
-                                    if (packetBuffer.Length != packetLength)
-                                    {
-                                        TerrPacketType type = TerrPacket.GetType(packetBuffer);
-                                        incompletePacketsLength += packetBuffer.Length;
-                                        Log.Info(
-                                            $"Incomplete packet in packetBuffer. Type {type} Sizes: expected {packetLength} actual: {packetBuffer.Length} Adding to incomplete packet buffer");
-
-                                        if (type == TerrPacketType.SendSection)
-                                        {
-                                            Log.Info("Dropped send secion packet.");
-                                            continue;
-                                        }
-
-                                        if (incompletePacketBuffer == null)
-                                            incompletePacketBuffer = new byte[BufferSize];
-
-                                        Buffer.BlockCopy(packetBuffer, 0, incompletePacketBuffer,
-                                            incompletePacketsLength, packetBuffer.Length);
-                                    }
-                                    else
-                                    {
-                                        if (packetLength >= TerrPacket.MinPacketSize)
-                                            OnPacketReceived(TerrPacket.Parse(packetBuffer, this));
-                                        else // this is rare but when it happens it breaks receiving.
-                                            Log.Critical($"Received packet under min size: {packetLength}");
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // not a full packet in buffer, fuck it
-                            // havent hit this with a critical packet (SendSections have hit it but fuck them)
-                            Log.Warning(
-                                $"Malformed packet. Parsed type {TerrPacket.GetType(buffer)}. Sizes: expected {packetProvidedLength,-5} received {bytesReceived}");
-                        }
-                        BeginReceive(incompletePacketBuffer);
-                    }
-                    catch (SocketException ex)
-                    {
-                        SetDisconnectState($"SocketException: {ex}");
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                    }
-
+                    BeginReceive();
                 }, null);
             }
             catch (SocketException ex)
@@ -366,6 +282,30 @@ namespace TerrariaBridge.Client
             }
             catch (ObjectDisposedException)
             {
+            }
+        }
+
+        private void TryReadPacket()
+        {
+            while (true)
+            {
+                if (_packetStream.Position >= _packetStream.Length - TerrPacket.MinPacketSize)
+                    break;
+
+                ushort packetLength = _packetReader.ReadUInt16();
+                _packetReader.BaseStream.Position -= sizeof(ushort);
+
+                if (packetLength < TerrPacket.MinPacketSize)
+                {
+                    Log.Warning($"Corrupted packetbuffer, read packet length of {packetLength}");
+                    break;
+                }
+
+                if (_packetStream.Position + packetLength > _packetStream.Length)
+                    break;
+
+                byte[] packetBuffer = _packetReader.ReadBytes(packetLength);
+                OnPacketReceived(TerrPacket.Parse(packetBuffer, this));
             }
         }
 
@@ -391,14 +331,19 @@ namespace TerrariaBridge.Client
 
         #endregion
 
-        ///<summary>Disposes the socket without calling any disconnect events. Use this you are getting StackOverflowExeceptions by calling Dispose().</summary>
+        ///<summary>Disposes the client without calling any disconnect events. Use this you are getting StackOverflowExeceptions by calling Dispose().</summary>
         public void SocketDispose()
-            => _socket?.Dispose();
+        {
+            _socket?.Dispose();
+            _packetStream?.Dispose();
+            _packetWriter?.Dispose();
+            _packetReader?.Dispose();
+        }
 
         public void Dispose()
         {
             Disconnect("TerrariaClient Dispose()");
-            _socket?.Dispose();
+            SocketDispose();
         }
     }
 }

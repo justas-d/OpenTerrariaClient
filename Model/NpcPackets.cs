@@ -22,8 +22,7 @@ namespace TerrariaBridge.Model
 
         protected override void WritePayload(BinaryWriter writer)
         {
-            writer.Write((short)PlayerId); // for some reason this pid has to be a short.
-            writer.Write(SpawnId);
+            writer.WriteMany((short) PlayerId, SpawnId);
         }
 
         protected override void ReadPayload(PayloadReader reader, TerrPacketType type)

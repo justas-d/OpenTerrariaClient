@@ -28,7 +28,7 @@ namespace TerrariaBridge.Model
             Id = value.Id;
         }
 
-        public GameItem(short id = 0, short stack = 0, byte prefix = 0)
+        public GameItem(short id = 0, short stack = 1, byte prefix = 0)
         {
             Id = id;
             Stack = stack;
