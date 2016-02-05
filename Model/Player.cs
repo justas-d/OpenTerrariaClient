@@ -1,6 +1,6 @@
-﻿using TerrariaBridge.Client;
+﻿using OpenTerrariaClient.Client;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public class Player
     {

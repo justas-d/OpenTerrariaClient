@@ -2,10 +2,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using OpenTerrariaClient.Packet;
 using StrmyCore;
-using TerrariaBridge.Packet;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     [DebuggerDisplay("{TerrariaBridge.Model.ID.IdLookup.GetItem(Id)}")]
     public sealed class GameItem : PacketWrapper
@@ -34,6 +34,9 @@ namespace TerrariaBridge.Model
             Stack = stack;
             Prefix = prefix;
         }
+
+        public static implicit operator GameItem(short id)
+            => new GameItem(id);
 
         protected override void WritePayload(BinaryWriter writer)
         {

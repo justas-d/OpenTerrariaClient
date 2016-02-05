@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public class PlayerInventory
     {

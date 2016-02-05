@@ -1,7 +1,7 @@
 ﻿using System;
-using TerrariaBridge.Client;
+using OpenTerrariaClient.Client;
 
-namespace TerrariaBridge.Packet
+namespace OpenTerrariaClient.Packet
 {
     public class TerrPacket
     {

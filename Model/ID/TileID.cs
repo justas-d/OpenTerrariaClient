@@ -4,7 +4,7 @@
 // MVID: 925BC6E4-7F2B-447A-92FB-BAE94A6960E5
 // Assembly location: C:\Program Files (x86)\Steam\steamapps\common\Terraria\Terraria.exe
 
-namespace TerrariaBridge.Model.ID
+namespace OpenTerrariaClient.Model.ID
 {
     public class TileId
     {

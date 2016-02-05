@@ -1,9 +1,8 @@
 ﻿using System;
 using System.IO;
-using StrmyCore;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public class ChatMessage : PacketWrapper
     {

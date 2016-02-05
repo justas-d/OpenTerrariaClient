@@ -1,8 +1,8 @@
 ﻿using System;
-using TerrariaBridge.Model;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Model;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Client
+namespace OpenTerrariaClient.Client
 {
     public sealed class WorldEventBeginEventArgs : EventArgs
     {

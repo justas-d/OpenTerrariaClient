@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace TerrariaBridge.Model.ID
+namespace OpenTerrariaClient.Model.ID
 {
     public static class IdLookup
     {

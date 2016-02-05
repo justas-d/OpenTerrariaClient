@@ -1,4 +1,4 @@
-﻿namespace TerrariaBridge.Packet
+﻿namespace OpenTerrariaClient.Packet
 {
     public enum TerrPacketType : byte
     {

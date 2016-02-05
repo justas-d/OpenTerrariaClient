@@ -1,12 +1,12 @@
 ﻿using System;
 using System.IO;
+using OpenTerrariaClient.Client;
+using OpenTerrariaClient.Client.Service;
+using OpenTerrariaClient.Model;
+using OpenTerrariaClient.Packet;
 using StrmyCore;
-using TerrariaBridge.Client;
-using TerrariaBridge.Client.Service;
-using TerrariaBridge.Model;
-using TerrariaBridge.Packet;
 
-namespace TerrariaBridge
+namespace OpenTerrariaClient
 {
     public static class Extensions
     {

@@ -1,7 +1,7 @@
 ﻿using System.IO;
-using TerrariaBridge.Model;
+using OpenTerrariaClient.Model;
 
-namespace TerrariaBridge.Packet
+namespace OpenTerrariaClient.Packet
 {
     public class PayloadReader : BinaryReader
     {

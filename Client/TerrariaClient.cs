@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
-using TerrariaBridge.Client.Service;
-using TerrariaBridge.Model;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Client.Service;
+using OpenTerrariaClient.Model;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Client
+namespace OpenTerrariaClient.Client
 {
     public partial class TerrariaClient : IDisposable
     {

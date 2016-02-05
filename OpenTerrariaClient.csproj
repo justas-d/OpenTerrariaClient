@@ -7,8 +7,8 @@
     <ProjectGuid>{E58C0719-6C38-4D0C-B1E8-3ED0C430B27C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OpenTerraria</RootNamespace>
-    <AssemblyName>OpenTerraria</AssemblyName>
+    <RootNamespace>OpenTerrariaClient</RootNamespace>
+    <AssemblyName>OpenTerrariaClient</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

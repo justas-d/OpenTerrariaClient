@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using TerrariaBridge.Model;
-using TerrariaBridge.Model.ID;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Model;
+using OpenTerrariaClient.Model.ID;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Client.Service
+namespace OpenTerrariaClient.Client.Service
 {
     ///<summary>Handles the parsing and handling of packets to which we must reply with an action.</summary>
     internal class InternalPacketManagerService : IService

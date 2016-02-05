@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using OpenTerrariaClient.Packet;
 using StrmyCore;
-using TerrariaBridge.Packet;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public class PlayerAppearance : PacketWrapper
     {

@@ -1,7 +1,7 @@
 ﻿using System;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public class CurrentPlayer : Player
     {

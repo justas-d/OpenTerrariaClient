@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace TerrariaBridge
+namespace OpenTerrariaClient
 {
     public static class Utils
     {

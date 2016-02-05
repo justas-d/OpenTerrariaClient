@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public sealed class SetNpcKillCount : PacketWrapper
     {

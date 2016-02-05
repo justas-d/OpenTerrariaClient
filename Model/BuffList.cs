@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public class BuffList : PacketWrapper
     {

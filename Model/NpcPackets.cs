@@ -2,10 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using OpenTerrariaClient.Packet;
 using StrmyCore;
-using TerrariaBridge.Packet;
 
-namespace TerrariaBridge.Model
+namespace OpenTerrariaClient.Model
 {
     public sealed class SpawnBossOrInvasion : PacketWrapper
     {

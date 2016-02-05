@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using TerrariaBridge.Packet;
+using OpenTerrariaClient.Packet;
 
-namespace TerrariaBridge.Client.Service
+namespace OpenTerrariaClient.Client.Service
 {
     public sealed class PacketEventService : IService
     {

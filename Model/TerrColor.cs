@@ -1,4 +1,4 @@
-﻿namespace TerrariaBridge.Model
+﻿namespace OpenTerrariaClient.Model
 {
     public struct TerrColor
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TerrariaBridge.Client.Service
+namespace OpenTerrariaClient.Client.Service
 {
     // https://github.com/RogueException/Discord.Net/blob/master/src/Discord.Net/ServiceManager.cs
     public class ServiceManager

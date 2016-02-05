@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace TerrariaBridge.Packet
+namespace OpenTerrariaClient.Packet
 {
     public abstract class PacketWrapper
     {

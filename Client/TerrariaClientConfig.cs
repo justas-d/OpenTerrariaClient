@@ -1,7 +1,7 @@
 ﻿using System;
-using TerrariaBridge.Model;
+using OpenTerrariaClient.Model;
 
-namespace TerrariaBridge.Client
+namespace OpenTerrariaClient.Client
 {
     public sealed class TerrariaClientConfig
     {

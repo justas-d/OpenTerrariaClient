@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace TerrariaBridge.Client
+namespace OpenTerrariaClient.Client
 {
-    public sealed class classLogMessageEventArgs : EventArgs
+    public sealed class ClassLogMessageEventArgs : EventArgs
     {
         public enum LogSeverity
         {
@@ -15,7 +15,7 @@ namespace TerrariaBridge.Client
         public DateTime Time { get; }
         public LogSeverity Severity { get; }
 
-        public classLogMessageEventArgs(string message, LogSeverity severity)
+        public ClassLogMessageEventArgs(string message, LogSeverity severity)
         {
             Message = message;
             Severity = severity;
@@ -25,20 +25,20 @@ namespace TerrariaBridge.Client
 
     public class LogManager
     {
-        public event EventHandler<classLogMessageEventArgs> MessageReceived = delegate { };
+        public event EventHandler<ClassLogMessageEventArgs> MessageReceived = delegate { };
 
         internal LogManager() { }
 
-        private void OnMessageReceived(string message, classLogMessageEventArgs.LogSeverity severity)
-            => MessageReceived(this, new classLogMessageEventArgs(message, severity));
+        private void OnMessageReceived(string message, ClassLogMessageEventArgs.LogSeverity severity)
+            => MessageReceived(this, new ClassLogMessageEventArgs(message, severity));
 
         public void Info(string message)
-            => OnMessageReceived(message, classLogMessageEventArgs.LogSeverity.Info);
+            => OnMessageReceived(message, ClassLogMessageEventArgs.LogSeverity.Info);
 
         public void Warning(string message)
-           => OnMessageReceived(message, classLogMessageEventArgs.LogSeverity.Warning);
+           => OnMessageReceived(message, ClassLogMessageEventArgs.LogSeverity.Warning);
 
         public void Critical(string message)
-           => OnMessageReceived(message, classLogMessageEventArgs.LogSeverity.Critical);
+           => OnMessageReceived(message, ClassLogMessageEventArgs.LogSeverity.Critical);
     }
 }
