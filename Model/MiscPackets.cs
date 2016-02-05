@@ -5,26 +5,39 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
-    public sealed class DestroyProjectile : PacketWrapper
+    public class ChatMessage : PacketWrapper
     {
-        public short ProjectileId { get; private set; }
         public byte PlayerId { get; private set; }
+        public TerrColor Color { get; private set; }
+        public string Text { get; internal set; }
 
-        internal DestroyProjectile()
+        internal ChatMessage() { }
+
+        internal ChatMessage(byte pid, string message)
         {
+            PlayerId = pid;
+            Text = message;
+        }
+
+        internal ChatMessage(byte pid, TerrColor color, string message) : this(pid, message)
+        {
+            Color = color;
         }
 
         protected override void WritePayload(BinaryWriter writer)
         {
-            writer.WriteMany(ProjectileId, PlayerId);
+            writer.Write(PlayerId);
+            writer.Write(Color.GetBytes());
+            writer.Write(Text);
         }
 
         protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
         {
-            CheckForValidType(type, TerrPacketType.DestroyProjectile);
+            if (type != TerrPacketType.ChatMessage) throw new ArgumentException($"{nameof(type)} is not {TerrPacketType.ChatMessage}");
 
-            ProjectileId = reader.ReadInt16();
             PlayerId = reader.ReadByte();
+            Color = reader.ReadTerrColor();
+            Text = reader.ReadString();
         }
     }
 

@@ -50,6 +50,13 @@ namespace TerrariaBridge.Client.Service
 
             #region Player
 
+            _events.Subscribe(TerrPacketType.TogglePvp, packet =>
+            {
+                TogglePvp pvpState = PacketWrapper.Parse<TogglePvp>(packet);
+                Player player = _client.GetPlayer(pvpState.PlayerId);
+                player.IsPvp = pvpState.Value;
+            });
+
             _events.Subscribe(TerrPacketType.PlayerAppearance, packet =>
             {
                 PlayerAppearance appearance = PacketWrapper.Parse<PlayerAppearance>(packet);
@@ -156,38 +163,42 @@ namespace TerrariaBridge.Client.Service
 
             #region Npc
 
-            _events.Subscribe(TerrPacketType.NpcUpdate, packet =>
+            if (_client.Config.TrackNpcData)
             {
-                Npc npc = PacketWrapper.Parse<Npc>(packet);
-                _client.NpcAddOrUpdate(npc);
-            });
-            _events.Subscribe(TerrPacketType.UpdateNpcName, packet =>
-            {
-                UpdateNpcName npcName = PacketWrapper.Parse<UpdateNpcName>(packet);
-                _client.GetExistingNpc(npcName.UniqueNpcId).Name = npcName.Name;
-            });
-            _events.Subscribe(TerrPacketType.TravellingMerchantInventory, packet =>
-            {
-                TravellingMerchantInventory travellingMerchant = PacketWrapper.Parse<TravellingMerchantInventory>(packet);
+                _events.Subscribe(TerrPacketType.NpcUpdate, packet =>
+                {
+                    Npc npc = PacketWrapper.Parse<Npc>(packet);
+                    _client.NpcAddOrUpdate(npc);
+                });
+                _events.Subscribe(TerrPacketType.UpdateNpcName, packet =>
+                {
+                    UpdateNpcName npcName = PacketWrapper.Parse<UpdateNpcName>(packet);
+                    _client.GetExistingNpc(npcName.UniqueNpcId).Name = npcName.Name;
+                });
+                _events.Subscribe(TerrPacketType.TravellingMerchantInventory, packet =>
+                {
+                    TravellingMerchantInventory travellingMerchant =
+                        PacketWrapper.Parse<TravellingMerchantInventory>(packet);
 
-                // find the traveling merchant in the npc list
-                foreach (var pair in client._npcs.Where(pair => pair.Value.NpcId == NpcId.TravellingMerchant))
-                    pair.Value.Shop = travellingMerchant.Items;
-            });
-            _events.Subscribe(TerrPacketType.SetNpcKillCount,
-                packet => _client.World.SetNpcKc(PacketWrapper.Parse<SetNpcKillCount>(packet)));
+                    // find the traveling merchant in the npc list
+                    foreach (var pair in client._npcs.Where(pair => pair.Value.NpcId == NpcId.TravellingMerchant))
+                        pair.Value.Shop = travellingMerchant.Items;
+                });
+                _events.Subscribe(TerrPacketType.SetNpcKillCount,
+                    packet => _client.World.SetNpcKc(PacketWrapper.Parse<SetNpcKillCount>(packet)));
 
-            _events.Subscribe(TerrPacketType.NpcHomeUpdate, packet =>
-            {
-                NpcHomeUpdate homeUpdate = PacketWrapper.Parse<NpcHomeUpdate>(packet);
-                Npc npc = _client.GetExistingNpc(homeUpdate.UniqueNpcId);
-                npc.HomeTileX = homeUpdate.HomeTileX;
-                npc.HomeTileY = homeUpdate.HomeTileY;
-                npc.IsHomeless = homeUpdate.IsHomeless;
-            });
+                _events.Subscribe(TerrPacketType.NpcHomeUpdate, packet =>
+                {
+                    NpcHomeUpdate homeUpdate = PacketWrapper.Parse<NpcHomeUpdate>(packet);
+                    Npc npc = _client.GetExistingNpc(homeUpdate.UniqueNpcId);
+                    npc.HomeTileX = homeUpdate.HomeTileX;
+                    npc.HomeTileY = homeUpdate.HomeTileY;
+                    npc.IsHomeless = homeUpdate.IsHomeless;
+                });
 
-            _events.Subscribe(TerrPacketType.NotifyPlayerNpcKilled, packet =>
-                _client.RemoveNpc(BitConverter.ToInt16(packet.Payload, 0)));
+                _events.Subscribe(TerrPacketType.NotifyPlayerNpcKilled, packet =>
+                    _client.RemoveNpc(BitConverter.ToInt16(packet.Payload, 0)));
+            }
 
             #endregion
 
@@ -196,24 +207,46 @@ namespace TerrariaBridge.Client.Service
             _events.Subscribe(TerrPacketType.RemoveItemOwner, packet =>
             {
                 RemoveItemOwner remItemOwner = PacketWrapper.Parse<RemoveItemOwner>(packet);
-                _client.UpdateItemOwner(remItemOwner.ItemIndex, Byte.MaxValue);
+                _client.UpdateItemOwner(remItemOwner.ItemIndex, byte.MaxValue);
+                // todo : figure out whether a RemoveItemOwner packet should call RemoveItem();
             });
-            _events.Subscribe(TerrPacketType.TogglePvp, packet =>
-            {
-                TogglePvp pvpState = PacketWrapper.Parse<TogglePvp>(packet);
-                Player player = _client.GetPlayer(pvpState.PlayerId);
-                player.IsPvp = pvpState.Value;
-            });
+
             _events.Subscribe(TerrPacketType.UpdateItemOwner, packet =>
             {
                 UpdateItemOwner updateOwner = PacketWrapper.Parse<UpdateItemOwner>(packet);
                 _client.UpdateItemOwner(updateOwner.ItemId, updateOwner.Owner);
             });
-            _events.SubscribeMany(packet =>
+
+            if (_client.Config.TrackItemData)
             {
-                WorldItem itemDrop = PacketWrapper.Parse<WorldItem>(packet);
-                _client.ItemAddOrUpdate(itemDrop);
-            }, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
+                _events.SubscribeMany(packet =>
+                {
+                    WorldItem itemDrop = PacketWrapper.Parse<WorldItem>(packet);
+
+                    if (itemDrop.Item.Id == ItemId.None) return;
+
+                    _client.ItemAddOrUpdate(itemDrop);
+
+                }, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
+            }
+            #endregion
+
+            #region Projectile
+
+            if (_client.Config.TrackProjectileData)
+            {
+                _events.Subscribe(TerrPacketType.ProjectileUpdate, packet =>
+                {
+                    WorldProjectile projUpdate = PacketWrapper.Parse<WorldProjectile>(packet);
+                    _client.ProjectileAddOrUpdate(projUpdate);
+                });
+
+                _events.Subscribe(TerrPacketType.DestroyProjectile, packet =>
+                {
+                    DestroyProjectile destroyProjectile = PacketWrapper.Parse<DestroyProjectile>(packet);
+                    _client.RemoveProjectile(destroyProjectile.ProjectileId);
+                });
+            }
 
             #endregion
 

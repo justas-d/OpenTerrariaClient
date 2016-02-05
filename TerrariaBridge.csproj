@@ -62,14 +62,13 @@
     <Compile Include="Model\NpcPackets.cs" />
     <Compile Include="Model\PlayerInventory.cs" />
     <Compile Include="Model\PlayerPackets.cs" />
+    <Compile Include="Model\ProjectilePackets.cs" />
     <Compile Include="Model\ValPair.cs" />
-    <Compile Include="Model\ChatMessage.cs" />
     <Compile Include="Model\MiscPackets.cs" />
     <Compile Include="Client\Service\PacketEventService.cs" />
     <Compile Include="Model\WorldPackets.cs" />
     <Compile Include="Packet\PacketWrapper.cs" />
     <Compile Include="Packet\PayloadReader.cs" />
-    <Compile Include="Model\PlayerAppearance.cs" />
     <Compile Include="Model\Player.cs" />
     <Compile Include="Model\TerrColor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

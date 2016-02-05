@@ -7,7 +7,7 @@ using TerrariaBridge.Packet;
 
 namespace TerrariaBridge.Model
 {
-    [DebuggerDisplay("Id = {Id}")]
+    [DebuggerDisplay("{TerrariaBridge.Model.ID.IdLookup.GetItem(Id)}")]
     public sealed class GameItem : PacketWrapper
     {
         internal byte? PlayerId { get; set; }

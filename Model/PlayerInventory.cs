@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace TerrariaBridge.Model
@@ -32,6 +33,15 @@ namespace TerrariaBridge.Model
 
                 InternalItems[i].SlotId = i;
             }
+        }
+
+        internal void SetItem(byte index, GameItem additem)
+        {
+            if(index > InventorySize) throw new ArgumentException("Item index is out of range.");
+
+            GameItem item = new GameItem(additem);
+            item.SlotId = index;
+            InternalItems[index] = item;
         }
     }
 }

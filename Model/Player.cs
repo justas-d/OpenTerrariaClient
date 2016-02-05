@@ -60,7 +60,7 @@ namespace TerrariaBridge.Model
         public byte SelectedItem { get; internal set; }
         public byte Pulley { get; internal set; }
         public byte Control { get; internal set; }
-        public Player.TeamType Team { get; internal set; }
+        public TeamType Team { get; internal set; }
 
         internal TerrariaClient Client { get; set; }
 

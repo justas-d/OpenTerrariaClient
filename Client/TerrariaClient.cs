@@ -17,11 +17,11 @@ namespace TerrariaBridge.Client
         private readonly ConcurrentDictionary<byte, Player> _players = new ConcurrentDictionary<byte, Player>();
         private readonly ConcurrentDictionary<short, WorldItem> _items = new ConcurrentDictionary<short, WorldItem>();
         internal readonly ConcurrentDictionary<short, Npc> _npcs = new ConcurrentDictionary<short, Npc>();
+        private readonly ConcurrentDictionary<short, WorldProjectile> _projectiles = new ConcurrentDictionary<short, WorldProjectile>();
 
         private const int BufferSize = 0x1FFFE;
         private MemoryStream _packetStream = new MemoryStream();
         private BinaryReader _packetReader;
-        private BinaryWriter _packetWriter;
 
         public const byte ServerPlayerId = byte.MaxValue;
         private Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) {PlayerId = ServerPlayerId};
@@ -37,6 +37,8 @@ namespace TerrariaBridge.Client
         ///<summary>Returns whether this client is connected to a server.</summary>
         public bool IsConnected => _socket.Connected;
 
+        ///<summary>Returns a list of projectiles currently active in the world.</summary>
+        public IEnumerable<WorldProjectile> Projectiles => _projectiles.Values;
         ///<summary>Returns a list of currently online players on the server.</summary>
         public IEnumerable<Player> Players => _players.Values;
         ///<summary>Returns a list of items present the world.</summary>
@@ -47,7 +49,6 @@ namespace TerrariaBridge.Client
         public CurrentPlayer CurrentPlayer { get; private set; }
         ///<summary>Returns the latest information about the terraria world the server provided to the bot.</summary>
         public WorldInfo World { get; internal set; }
-
 
         internal bool IsLoggingIn;
 
@@ -66,7 +67,6 @@ namespace TerrariaBridge.Client
         private void FinishConstruction()
         {
             _packetReader = new BinaryReader(_packetStream);
-            _packetWriter = new BinaryWriter(_packetStream);
 
             Services = new ServiceManager(this);
 
@@ -176,13 +176,14 @@ namespace TerrariaBridge.Client
 
         internal void UpdateItemOwner(short id, byte owner)
         {
+            this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(id, owner));
+
+            if (!Config.TrackItemData) return;
+
             WorldItem item = GetExistingItem(id);
 
             if (item != null)
-            {
                 item.Owner = owner;
-                this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(id, owner));
-            }
         }
 
         internal void ItemAddOrUpdate(WorldItem item)
@@ -196,7 +197,7 @@ namespace TerrariaBridge.Client
 
         public WorldItem GetExistingItem(short id)
         {
-            if (!_items.ContainsKey(id)) return null;
+            if(!Config.TrackItemData) throw new InvalidOperationException("Cannot get item data when item data tracking is disabled.");
 
             WorldItem retval;
             _items.TryGetValue(id, out retval);
@@ -217,10 +218,34 @@ namespace TerrariaBridge.Client
 
         public Npc GetExistingNpc(short id)
         {
+            if (!Config.TrackProjectileData) throw new InvalidOperationException("Cannot get npc data when npc data tracking is disabled.");
+
             if (!_npcs.ContainsKey(id)) return null;
 
             Npc retval;
             _npcs.TryGetValue(id, out retval);
+            return retval;
+        }
+
+        #endregion
+
+        #region Projectile
+
+        internal void ProjectileAddOrUpdate(WorldProjectile proj)
+            => _projectiles.AddOrUpdate(proj.UniqueId, proj, (oldkey, oldval) => proj);
+
+        internal void RemoveProjectile(short uniqueId)
+        {
+            WorldProjectile ignored;
+            _projectiles.TryGetValue(uniqueId, out ignored);
+        }
+
+        public WorldProjectile GetExistingProjectile(short uniqueId)
+        {
+            if(!Config.TrackProjectileData) throw new InvalidOperationException("Cannot get projectile data when projectile data tracking is disabled.");
+
+            WorldProjectile retval;
+            _projectiles.TryGetValue(uniqueId, out retval);
             return retval;
         }
 
@@ -269,7 +294,7 @@ namespace TerrariaBridge.Client
                 {
                     int bytesRead = _socket.EndReceive(ar);
 
-                    _packetWriter.Write(buffer, 0, bytesRead);
+                    _packetStream.Write(buffer, 0, bytesRead);
                     _packetStream.Position = _packetStream.Position - bytesRead;
                     TryReadPacket();
 
@@ -297,15 +322,14 @@ namespace TerrariaBridge.Client
 
                 if (packetLength < TerrPacket.MinPacketSize)
                 {
-                    Log.Warning($"Corrupted packetbuffer, read packet length of {packetLength}");
+                    Log.Critical($"Corrupted packet buffer, read packet length of {packetLength}");
                     break;
                 }
 
                 if (_packetStream.Position + packetLength > _packetStream.Length)
                     break;
 
-                byte[] packetBuffer = _packetReader.ReadBytes(packetLength);
-                OnPacketReceived(TerrPacket.Parse(packetBuffer, this));
+                OnPacketReceived(TerrPacket.Parse(_packetReader.ReadBytes(packetLength), this));
             }
         }
 
@@ -336,7 +360,6 @@ namespace TerrariaBridge.Client
         {
             _socket?.Dispose();
             _packetStream?.Dispose();
-            _packetWriter?.Dispose();
             _packetReader?.Dispose();
         }
 
