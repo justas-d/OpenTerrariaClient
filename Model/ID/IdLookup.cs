@@ -31,7 +31,6 @@ namespace OpenTerrariaClient.Model.ID
             return "Not found.";
         }
 
-
         public static short GetInvasion(string name)
             => GetStaticFieldValue<short>(typeof (InvasionId), name);
         public static string GetInvasion(short id)
@@ -66,5 +65,9 @@ namespace OpenTerrariaClient.Model.ID
         public static string GetBuff(short id)
             => GetStaticFieldName(typeof(BuffId), id);
 
+        public static byte GetPrefix(string name)
+            => GetStaticFieldValue<byte>(typeof(PrefixID), name);
+        public static string GetPrefix(byte id)
+            => GetStaticFieldName(typeof(PrefixID), id);
     }
 }

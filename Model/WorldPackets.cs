@@ -60,8 +60,8 @@ namespace OpenTerrariaClient.Model
             {
                 _time = value;
 
-                // taken from the terraria src. i swear the devs must have been high when they designed the time system.
-
+                // taken from the terraria src. 
+                // i swear the devs must have been high when they designed the time system.
                 if (!IsDay)
                     value += 54000;
 
