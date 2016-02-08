@@ -41,24 +41,20 @@ namespace OpenTerrariaClient.Model.ID
         public static string GetItem(short id)
             => GetStaticFieldName(typeof(ItemId), id);
 
-
         public static short GetNpc(string name)
             => GetStaticFieldValue<short>(typeof (NpcId), name);
         public static string GetNpc(short id)
             => GetStaticFieldName(typeof(NpcId), id);
-
 
         public static ushort GetTile(string name)
             => GetStaticFieldValue<ushort>(typeof (TileId), name);
         public static string GetTile(short id)
             => GetStaticFieldName(typeof(TileId), id);
 
-
         public static byte GetWall(string name)
             => GetStaticFieldValue<byte>(typeof (WallId), name);
         public static string GetWall(short id)
             => GetStaticFieldName(typeof(WallId), id);
-
 
         public static byte GetBuff(string name)
             => GetStaticFieldValue<byte>(typeof (BuffId), name);

@@ -1,4 +1,5 @@
-﻿using OpenTerrariaClient.Client;
+﻿using System.Collections;
+using OpenTerrariaClient.Client;
 
 namespace OpenTerrariaClient.Model
 {
@@ -58,9 +59,18 @@ namespace OpenTerrariaClient.Model
         public bool IsPvp { get; internal set; }
 
         public byte SelectedItem { get; internal set; }
-        public byte Pulley { get; internal set; }
-        public byte Control { get; internal set; }
         public TeamType Team { get; internal set; }
+
+        public bool IsGoingUp { get; private set; }
+        public bool IsGoingDown { get; private set; }
+        public bool IsGoingLeft { get; private set; }
+        public bool IsGoingRight { get; private set; }
+        public bool IsJumping { get; private set; }
+        public bool IsUsingItem { get; private set; }
+        ///<summary>Represents a east or west direction.</summary>
+        public bool Direction { get; private set; }
+
+        public byte PulleyFlags { get; private set; }
 
         internal TerrariaClient Client { get; set; }
 
@@ -80,7 +90,7 @@ namespace OpenTerrariaClient.Model
             PlayerId = player.PlayerId;
         }
 
-        public Player(PlayerAppearance appearance = null,
+        internal Player(PlayerAppearance appearance = null,
             ValPidPair<short> health = null, ValPidPair<short> mana = null,
             BuffList buffs = null, PlayerInventory inventory = null)
         {
@@ -89,6 +99,24 @@ namespace OpenTerrariaClient.Model
             Inventory = inventory ?? new PlayerInventory();
             Health = health ?? new ValPidPair<short>(DefaultHp, DefaultHp);
             Mana = mana ?? new ValPidPair<short>(DefaultMana, DefaultMana);
+        }
+
+        internal void Update(UpdatePlayer update)
+        {
+            BitArray control = new BitArray(new[] {update.Control});
+            IsGoingUp = control[0];
+            IsGoingDown = control[1];
+            IsGoingLeft = control[2];
+            IsGoingRight = control[3];
+            IsJumping = control[4];
+            IsUsingItem = control[5];
+            Direction = control[6];
+
+            PulleyFlags = update.Pulley;
+            SelectedItem = update.SelectedItem;
+
+            Position = update.Position;
+            Velocity = update.Velocity;
         }
     }
 }

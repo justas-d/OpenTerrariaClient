@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.IO;
 using System.Reflection;
 using OpenTerrariaClient.Packet;
@@ -252,8 +253,14 @@ namespace OpenTerrariaClient.Model
         internal UpdatePlayer(CurrentPlayer player)
         {
             PlayerId = player.PlayerId.Value;
-            Control = player.Control;
-            Pulley = player.Pulley;
+            Control =
+                new BitArray(new[]
+                {
+                    player.IsGoingUp, player.IsGoingDown,
+                    player.IsGoingLeft, player.IsGoingRight, player.IsJumping,
+                    player.IsUsingItem, player.Direction
+                }).ConvertToByte(false);
+            Pulley = player.PulleyFlags;
             SelectedItem = player.SelectedItem;
             Position = player.Position ?? new ValPair<float>(0, 0);
             Velocity = player.Velocity ?? new ValPair<float>(0, 0);

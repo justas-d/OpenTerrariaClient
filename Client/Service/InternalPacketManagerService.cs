@@ -67,7 +67,6 @@ namespace OpenTerrariaClient.Client.Service
 
             _events.Subscribe(TerrPacketType.SetInventory, packet =>
             {
-
                 GameItem setItem = PacketWrapper.Parse<GameItem>(packet);
                 Player player = _client.GetPlayer(setItem.PlayerId.Value);
 
@@ -112,12 +111,7 @@ namespace OpenTerrariaClient.Client.Service
             _events.Subscribe(TerrPacketType.UpdatePlayer, packet =>
             {
                 UpdatePlayer update = PacketWrapper.Parse<UpdatePlayer>(packet);
-                Player player = _client.GetPlayer(update.PlayerId);
-                player.Position = update.Position;
-                player.Velocity = update.Velocity;
-                player.SelectedItem = update.SelectedItem;
-                player.Control = update.Control;
-                player.Pulley = update.Pulley;
+                _client.GetPlayer(update.PlayerId).Update(update);
             });
 
             _events.Subscribe(TerrPacketType.PlayerActive, packet =>

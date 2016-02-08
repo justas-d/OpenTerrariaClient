@@ -79,10 +79,13 @@ namespace OpenTerrariaClient.Model
                 Client.Send(TerrPacketType.TogglePvp, new TogglePvp(PlayerId.Value, state.Value));
         }
 
-        public void SetPos(ValPair<float> pos)
+        public void SetPos(ValPair<float> pos, bool requestTileData = false)
         {
             Position = pos;
             Client.Send(TerrPacketType.UpdatePlayer, new UpdatePlayer(this));
+
+            if (requestTileData)
+                Client.Send(TerrPacketType.RequestInitialTileData, new ValPair<int>((int) pos.Val1, (int) pos.Val2));
         }
 
         public void SendMessage(string text)

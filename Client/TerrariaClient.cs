@@ -30,7 +30,7 @@ namespace OpenTerrariaClient.Client
 
         public LogManager Log { get; } = new LogManager();
         ///<summary>Returns the configuration data used for this client.</summary>
-        public TerrariaClientConfig Config { get; internal set; }
+        public TerrariaClientConfig Config { get; }
         ///<summary>Returns the service manager for this client.</summary>
         public ServiceManager Services { get; private set; }
 
