@@ -7,7 +7,7 @@ using StrmyCore;
 
 namespace OpenTerrariaClient.Model
 {
-    [DebuggerDisplay("{TerrariaBridge.Model.ID.IdLookup.GetItem(Id)}")]
+    [DebuggerDisplay("{OpenTerrariaClient.Model.ID.IdLookup.GetItem(Id)}")]
     public sealed class GameItem : PacketWrapper
     {
         internal byte? PlayerId { get; set; }
@@ -122,6 +122,7 @@ namespace OpenTerrariaClient.Model
     }
 
     ///<summary>Aka UpdateItemDrop</summary>
+    [DebuggerDisplay("Uid: {UniqueId};{OpenTerrariaClient.Model.ID.IdLookup.GetItem(Item.Id)}")]
     public sealed class WorldItem : PacketWrapper
     {
         ///<summary>The unique id for this world item. It is not equal to Item.Id</summary>

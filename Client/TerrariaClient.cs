@@ -2,10 +2,12 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using OpenTerrariaClient.Client.Service;
 using OpenTerrariaClient.Model;
+using OpenTerrariaClient.Model.ID;
 using OpenTerrariaClient.Packet;
 
 namespace OpenTerrariaClient.Client
@@ -174,6 +176,14 @@ namespace OpenTerrariaClient.Client
 
         #region Item
 
+        internal void TryClearStars()
+        {
+            if (!World.IsDay) return;
+
+            foreach (var pair in _items.Where(pair => pair.Value.Item.Id == ItemId.FallenStar))
+                RemoveItem(pair.Key);
+        }
+
         internal void UpdateItemOwner(short id, byte owner)
         {
             this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(id, owner));
@@ -292,13 +302,23 @@ namespace OpenTerrariaClient.Client
                 byte[] buffer = new byte[BufferSize];
                 _socket.BeginReceive(buffer, 0, BufferSize, SocketFlags.None, (ar) =>
                 {
-                    int bytesRead = _socket.EndReceive(ar);
+                    try
+                    {
+                        int bytesRead = _socket.EndReceive(ar);
 
-                    _packetStream.Write(buffer, 0, bytesRead);
-                    _packetStream.Position = _packetStream.Position - bytesRead;
-                    TryReadPacket();
+                        _packetStream.Write(buffer, 0, bytesRead);
+                        _packetStream.Position = _packetStream.Position - bytesRead;
+                        TryReadPacket();
 
-                    BeginReceive();
+                        BeginReceive();
+                    }
+                    catch (SocketException ex)
+                    {
+                        SetDisconnectState($"SocketException: {ex}");
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
                 }, null);
             }
             catch (SocketException ex)

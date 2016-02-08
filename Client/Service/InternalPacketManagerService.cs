@@ -140,15 +140,20 @@ namespace OpenTerrariaClient.Client.Service
             #region World
 
             _events.Subscribe(TerrPacketType.WorldInformation,
-                packet => _client.World = PacketWrapper.Parse<WorldInfo>(packet));
+                packet =>
+                {
+                    _client.World = PacketWrapper.Parse<WorldInfo>(packet);
+                    _client.TryClearStars();
+                });
 
             _events.Subscribe(TerrPacketType.Time, packet =>
             {
                 WorldTime time = PacketWrapper.Parse<WorldTime>(packet);
-                _client.World.Time = time.Time;
+                _client.World.RawTime = time.Time;
                 _client.World.IsDay = time.IsDay;
                 _client.World.SunModY = time.SunModY;
                 _client.World.MoonModY = time.MoonModY;
+                _client.TryClearStars();
             });
 
             _events.Subscribe(TerrPacketType.NotifyPlayerOfEvent, packet =>
@@ -229,6 +234,7 @@ namespace OpenTerrariaClient.Client.Service
 
                 }, TerrPacketType.UpdateItemDrop, TerrPacketType.UpdateItemDrop2);
             }
+
             #endregion
 
             #region Projectile

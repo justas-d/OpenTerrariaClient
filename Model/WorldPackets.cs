@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using OpenTerrariaClient.Packet;
@@ -50,8 +51,35 @@ namespace OpenTerrariaClient.Model
 
     public sealed class WorldInfo : PacketWrapper
     {
-        public int Time { get; internal set; }
-        public byte DayMoonInfo { get; private set; }
+        private int _time;
+
+        public int RawTime
+        {
+            get { return _time; }
+            internal set
+            {
+                _time = value;
+
+                // taken from the terraria src. i swear the devs must have been high when they designed the time system.
+
+                if (!IsDay)
+                    value += 54000;
+
+                double time = value/86400.0*24.0 - 7.5 - 12.0;
+
+                if (time < 0.0)
+                    time += 24.0;
+
+                int hour = (int) time;
+                int minute = (int) ((time - hour)*60.0);
+
+                Time = new TimeSpan(0, hour, minute);
+            }
+        }
+
+        public TimeSpan Time { get; private set; }
+
+        internal byte DayMoonInfo { get; private set; }
         public byte MoonPhase { get; private set; }
         public short MaxTilesX { get; private set; }
         public short MaxTilesY { get; private set; }
@@ -97,9 +125,12 @@ namespace OpenTerrariaClient.Model
         public sbyte InvasionType { get; private set; }
         public ulong LobbyId { get; private set; }
 
-        public bool IsDay { get; internal set; }
         public short SunModY { get; internal set; }
         public short MoonModY { get; internal set; }
+
+        public bool IsDay { get; internal set; }
+        public bool IsBloodmoon { get; internal set; }
+        public bool IsEclipse { get; internal set; }
 
         public Dictionary<short, int> NpcKillCount { get; internal set; } = new Dictionary<short, int>();
 
@@ -123,8 +154,16 @@ namespace OpenTerrariaClient.Model
             if (type != TerrPacketType.WorldInformation)
                 throw new ArgumentException($"{nameof(type)} is not {TerrPacketType.WorldInformation}");
 
-            Time = reader.ReadInt32();
+            int tempTime = reader.ReadInt32(); // store this value so we have the correct IsDay when evalutaing real time.
+
             DayMoonInfo = reader.ReadByte();
+            BitArray timeInfo = new BitArray(new [] {DayMoonInfo});
+            IsDay = timeInfo[0];
+            IsBloodmoon = timeInfo[1];
+            IsEclipse = timeInfo[2];
+
+            RawTime = tempTime;
+
             MoonPhase = reader.ReadByte();
             MaxTilesX = reader.ReadInt16();
             MaxTilesY = reader.ReadInt16();
