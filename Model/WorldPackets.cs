@@ -118,10 +118,6 @@ namespace OpenTerrariaClient.Model
         public byte CaveBackStyle3 { get; private set; }
         public byte CaveBackStyle4 { get; private set; }
         public float Rain { get; private set; }
-        public byte EventInfo1 { get; private set; }
-        public byte EventInfo2 { get; private set; }
-        public byte EventInfo3 { get; private set; }
-        public byte EventInfo4 { get; private set; }
         public sbyte InvasionType { get; private set; }
         public ulong LobbyId { get; private set; }
 
@@ -131,6 +127,41 @@ namespace OpenTerrariaClient.Model
         public bool IsDay { get; internal set; }
         public bool IsBloodmoon { get; internal set; }
         public bool IsEclipse { get; internal set; }
+
+        public bool IsShadowOrbSmashed { get; internal set; }
+        public bool IsEyeOfCthuluDefeated { get; internal set; }
+        public bool IsEowOrBrainDefeated { get; internal set; }
+        public bool IsSkeletronDefeated { get; internal set; }
+        public bool IsHardmode { get; internal set; }
+        public bool IsClownDefeated { get; internal set; }
+        public bool IsPlanteraDefeated { get; internal set; }
+
+        public bool IsDestroyedDeafeated { get; internal set; }
+        public bool AreTwinsDefeated { get; internal set; }
+        public bool IsSkeletronPrimeDefeated { get; internal set; }
+        public bool IsAnyMechBossDefeated { get; internal set; }
+        public bool IsCrimson { get; internal set; }
+        public bool IsPumpkinMoonActive { get; internal set; }
+        public bool IsSnowMoonActive { get; internal set; }
+
+        public bool IsExpertMode { get; internal set; }
+        public bool IsFastForwardingTime { get; internal set; }
+        public bool IsSlimeRainActive { get; internal set; }
+        public bool IsSlimeKingDefeated { get; internal set; }
+        public bool IsQueenBeeDefeated { get; internal set; }
+        public bool IsFishronDefeated { get; internal set; }
+        public bool AreMartiansDefeated { get; internal set; }
+        public bool AreCultistsDefeated { get; internal set; }
+
+        public bool IsMoonlordDefeated { get; internal set; }
+        public bool IsHalloweenKingDefeated { get; internal set; }
+        public bool IsHalloweenTreeDefeated { get; internal set; }
+        public bool IsChristmasIceQueenDefeated { get; internal set; }
+        public bool IsChristmasSantankDefeated { get; internal set; }
+        public bool IsChristmasTreeDefeated { get; internal set; }
+        public bool IsGolemDefeated { get; internal set; }
+
+        public bool IsCloudBgActive { get; internal set; }
 
         public Dictionary<short, int> NpcKillCount { get; internal set; } = new Dictionary<short, int>();
 
@@ -202,10 +233,46 @@ namespace OpenTerrariaClient.Model
             CaveBackStyle3 = reader.ReadByte();
             CaveBackStyle4 = reader.ReadByte();
             Rain = reader.ReadSingle();
-            EventInfo1 = reader.ReadByte();
-            EventInfo2 = reader.ReadByte();
-            EventInfo3 = reader.ReadByte();
-            EventInfo4 = reader.ReadByte();
+
+            BitArray events1 = new BitArray(new [] {reader.ReadByte()});
+            IsShadowOrbSmashed = events1[0];
+            IsEyeOfCthuluDefeated = events1[1];
+            IsEowOrBrainDefeated = events1[2];
+            IsSkeletronDefeated = events1[3];
+            IsHardmode = events1[4];
+            IsClownDefeated = events1[5];
+            // events1[6] is Main.serverSideCharacter.
+            IsPlanteraDefeated = events1[7];
+
+            BitArray events2 = new BitArray(new [] {reader.ReadByte()});
+            IsDestroyedDeafeated = events2[0];
+            AreTwinsDefeated = events2[1];
+            IsSkeletronPrimeDefeated = events2[2];
+            IsAnyMechBossDefeated = events2[3];
+            IsCloudBgActive = events2[4];
+            IsCrimson = events2[5];
+            IsPumpkinMoonActive = events2[6];
+            IsSnowMoonActive = events2[7];
+
+            BitArray events3 = new BitArray(new [] {reader.ReadByte()});
+            IsExpertMode = events3[0];
+            IsFastForwardingTime = events3[1];
+            IsSlimeRainActive = events3[2];
+            IsSlimeKingDefeated = events3[3];
+            IsQueenBeeDefeated = events3[4];
+            IsFishronDefeated = events3[5];
+            AreMartiansDefeated = events3[6];
+            AreCultistsDefeated = events3[7];
+
+            BitArray events4 = new BitArray(new [] {reader.ReadByte()});
+            IsMoonlordDefeated = events4[0];
+            IsHalloweenKingDefeated = events4[1];
+            IsHalloweenTreeDefeated = events4[2];
+            IsChristmasIceQueenDefeated = events4[3];
+            IsChristmasSantankDefeated = events4[4];
+            IsChristmasTreeDefeated = events4[5];
+            IsGolemDefeated = events4[6];
+
             InvasionType = reader.ReadSByte();
             LobbyId = reader.ReadUInt64();
         }

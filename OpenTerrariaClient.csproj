@@ -56,6 +56,7 @@
     <Compile Include="Model\ID\InvasionID.cs" />
     <Compile Include="Model\ID\ItemID.cs" />
     <Compile Include="Model\ID\NPCID.cs" />
+    <Compile Include="Model\ID\PrefixID.cs" />
     <Compile Include="Model\ID\TileID.cs" />
     <Compile Include="Model\ID\WallID.cs" />
     <Compile Include="Model\ItemPackets.cs" />
