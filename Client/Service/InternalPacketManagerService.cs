@@ -34,7 +34,15 @@ namespace OpenTerrariaClient.Client.Service
             {
                 if (!client.IsLoggingIn) return;
 
-                client.OnLoggedIn(packet.Payload[0]);
+                byte pid = packet.Payload[0];
+
+                _client.CurrentPlayer = new CurrentPlayer(_client.Config.PlayerData)
+                {
+                    PlayerId = pid,
+                    Client = _client,
+                    Guid = _client.Config.PlayerGuid
+                };
+
                 SendLoginPackets();
             });
 
@@ -311,6 +319,8 @@ namespace OpenTerrariaClient.Client.Service
                     await Task.Delay(_client.Config.KeepaliveFrequencyMs);
                 }
             });
+
+            _client.OnLoggedIn(_client.CurrentPlayer.PlayerId.Value);
         }
     }
 }

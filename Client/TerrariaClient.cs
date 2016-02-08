@@ -48,7 +48,7 @@ namespace OpenTerrariaClient.Client
         ///<summary>Returns a list of npcs that are present in the world.</summary>
         public IEnumerable<Npc> Npcs => _npcs.Values;
         ///<summary>Returns the player that the bot appears as.</summary>
-        public CurrentPlayer CurrentPlayer { get; private set; }
+        public CurrentPlayer CurrentPlayer { get; internal set; }
         ///<summary>Returns the latest information about the terraria world the server provided to the bot.</summary>
         public WorldInfo World { get; internal set; }
 
@@ -114,16 +114,6 @@ namespace OpenTerrariaClient.Client
                 throw new InvalidOperationException("You cannot try to log in when already trying to log in.");
 
             IsLoggingIn = true;
-
-            LoggedIn += (s, e) =>
-            {
-                CurrentPlayer = new CurrentPlayer(Config.PlayerData)
-                {
-                    PlayerId = e.PlayerId,
-                    Client = this,
-                    Guid = Config.PlayerGuid
-                };
-            };
 
             this.Send(TerrPacketType.ConnectRequest, Config.TerrariaVersion);
         }

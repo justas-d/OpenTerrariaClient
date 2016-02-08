@@ -90,5 +90,8 @@ namespace OpenTerrariaClient.Model
 
         public void SendMessage(string text)
             => Client.Send(TerrPacketType.ChatMessage, new ChatMessage(PlayerId.Value, text));
+
+        public void Killme(string deathText = "", byte hitDirection = 0, bool pvp = false)
+            => Client.Send(TerrPacketType.KillMe, new KillMe(PlayerId.Value, hitDirection, Health.Val2, pvp, deathText));
     }
 }

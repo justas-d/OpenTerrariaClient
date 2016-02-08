@@ -7,6 +7,42 @@ using StrmyCore;
 
 namespace OpenTerrariaClient.Model
 {
+    public class KillMe : PacketWrapper
+    {
+        public byte PlayerId { get; private set; }
+        public byte HitDirection { get; private set; }
+        public short Damage { get; private set; }
+        public bool WasPvP { get; private set; }
+        public string DeathText { get; private set; }
+
+        internal KillMe() { }
+
+        public KillMe(byte pid,byte hitDir, short damage, bool pvp, string text)
+        {
+            PlayerId = pid;
+            HitDirection = hitDir;
+            Damage = damage;
+            WasPvP = pvp;
+            DeathText = text;
+        }
+
+        protected override void WritePayload(BinaryWriter writer)
+        {
+            writer.WriteMany(PlayerId, HitDirection, Damage, WasPvP, DeathText);
+        }
+
+        protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
+        {
+            CheckForValidType(type, TerrPacketType.KillMe);
+
+            PlayerId = reader.ReadByte();
+            HitDirection = reader.ReadByte();
+            Damage = reader.ReadInt16();
+            WasPvP = reader.ReadBoolean();
+            DeathText = reader.ReadString();
+        }
+    }
+
     public class PlayerAppearance : PacketWrapper
     {
         internal byte? PlayerId { get; set; }
