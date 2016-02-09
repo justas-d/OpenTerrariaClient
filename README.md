@@ -2,7 +2,7 @@
 A small library aimed at recreating a Terraria client.
 
 # Capabilities
-In it's current state, this project can do basically anything a normal Terraria client except rendering.
+In it's current state, this project can do basically anything a normal Terraria client except rendering, sound playback and control handling.
 
 It has been built around the vanilla Terraria v1.3.0.8 (156 internally) server.
 Tshock support has not been tested and is not planned.
@@ -10,7 +10,7 @@ Tshock support has not been tested and is not planned.
 # Prerequisites
 * .Net 4.5.2
 * C#6
-* StrmyCore (https://github.com/SSStormy/OpenTerraria)
+* StrmyCore (https://github.com/SSStormy/StrmyCore)
 
 # Usage
 We have no docs at the moment. Refer to these implementations instead:
