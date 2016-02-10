@@ -12,7 +12,9 @@ namespace OpenTerrariaClient.Client
         public event EventHandler<PacketReceivedEventArgs> PacketReceived = delegate { };
         public event EventHandler<MessageReceivedEventArgs> MessageReceived = delegate { };
         public event EventHandler<StatusReceivedEventArgs> StatusReceived = delegate { };
-        public event EventHandler<WorldEventBeginEventArgs> WorldEventBegin = delegate { }; 
+        public event EventHandler<WorldEventBeginEventArgs> WorldEventBegin = delegate { };
+        public event EventHandler<PlayerEventArgs> PlayerJoined = delegate { };
+        public event EventHandler<PlayerEventArgs> PlayerDisconnected = delegate { };
 
         internal void OnConnected() => Connected(this, EventArgs.Empty);
         internal void OnDisconnected(string reason) => Disconnected(this, new DisconnectEventArgs(reason));
@@ -33,5 +35,7 @@ namespace OpenTerrariaClient.Client
 
         internal void OnStatusReceived(Status status) => StatusReceived(this, new StatusReceivedEventArgs(status));
         internal void OnWorldEventBegin(short id) => WorldEventBegin(this, new WorldEventBeginEventArgs(id));
+        internal void OnPlayerJoined(byte pid) => PlayerJoined(this, new PlayerEventArgs(pid, this));
+        internal void OnPlayerDisconnected(byte pid) => PlayerDisconnected(this, new PlayerEventArgs(pid, this));
     }
 }

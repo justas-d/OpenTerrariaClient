@@ -4,6 +4,18 @@ using OpenTerrariaClient.Packet;
 
 namespace OpenTerrariaClient.Client
 {
+    public sealed class PlayerEventArgs : EventArgs
+    {
+        public byte PlayerId { get; }
+        public Player Player { get; }
+
+        public PlayerEventArgs(byte pid, TerrariaClient client)
+        {
+            PlayerId = pid;
+            Player = client.GetExistingPlayer(pid);
+        }
+    }
+
     public sealed class WorldEventBeginEventArgs : EventArgs
     {
         public short EventId { get; private set; }

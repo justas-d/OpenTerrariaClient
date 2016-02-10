@@ -109,7 +109,8 @@ namespace OpenTerrariaClient.Client
         {
             if (!_socket.Connected)
                 throw new InvalidOperationException("You first need to connect to the server if you want to login.");
-            if (IsLoggedIn) throw new InvalidOperationException("You cannot log into a server two times.");
+            if (IsLoggedIn)
+                throw new InvalidOperationException("You cannot log into a server two times.");
             if (IsLoggingIn)
                 throw new InvalidOperationException("You cannot try to log in when already trying to log in.");
 
@@ -120,43 +121,44 @@ namespace OpenTerrariaClient.Client
 
         #region Player
 
-        internal bool RemovePlayer(byte pid)
+        internal bool RemovePlayer(byte uniquePlayerId)
         {
-            if (!_players.ContainsKey(pid)) return false;
+            if (!_players.ContainsKey(uniquePlayerId)) return false;
 
             Player ignored;
-            _players.TryRemove(pid, out ignored);
+            _players.TryRemove(uniquePlayerId, out ignored);
 
-            Log.Info($"Disconnected: {pid}");
+            OnPlayerDisconnected(uniquePlayerId);
             return true;
         }
 
-        internal Player RegisterPlayer(byte pid)
+        internal Player RegisterPlayer(byte uniquePlayerId)
         {
-            if (pid == ServerPlayerId) return null;
-            if (_players.ContainsKey(pid)) return null; // dont register a player if we contain it
-            if (CurrentPlayer.PlayerId == pid) return null; // dont register ourselves
+            if (uniquePlayerId == ServerPlayerId) return null;
+            if (_players.ContainsKey(uniquePlayerId)) return null; // dont register a player if we contain it
+            if (CurrentPlayer.PlayerId == uniquePlayerId) return null; // dont register ourselves
 
-            Player player = new Player(pid, this);
-            _players.TryAdd(pid, player);
+            Player player = new Player(uniquePlayerId, this);
+            _players.TryAdd(uniquePlayerId, player);
 
-            Log.Info($"Connected: {pid}");
+            OnPlayerJoined(uniquePlayerId);
             return player;
         }
 
-        public Player GetExistingPlayer(byte playerId)
+        public Player GetExistingPlayer(byte uniquePlayerId)
         {
-            if (!IsLoggedIn) throw new InvalidOperationException("You need to be logged in.");
+            if (!IsLoggedIn)
+                throw new InvalidOperationException("You need to be logged in.");
 
-            if (CurrentPlayer.PlayerId == playerId)
+            if (CurrentPlayer.PlayerId == uniquePlayerId)
                 return CurrentPlayer;
 
-            if (playerId == ServerPlayerId) return ServerDummyPlayer;
+            if (uniquePlayerId == ServerPlayerId) return ServerDummyPlayer;
 
-            if (!_players.ContainsKey(playerId)) return null;
+            if (!_players.ContainsKey(uniquePlayerId)) return null;
 
             Player retval;
-            _players.TryGetValue(playerId, out retval);
+            _players.TryGetValue(uniquePlayerId, out retval);
             return retval;
         }
 
@@ -174,13 +176,13 @@ namespace OpenTerrariaClient.Client
                 RemoveItem(pair.Key);
         }
 
-        internal void UpdateItemOwner(short id, byte owner)
+        internal void UpdateItemOwner(short uniqueItemId, byte owner)
         {
-            this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(id, owner));
+            this.Send(TerrPacketType.UpdateItemOwner, new UpdateItemOwner(uniqueItemId, owner));
 
             if (!Config.TrackItemData) return;
 
-            WorldItem item = GetExistingItem(id);
+            WorldItem item = GetExistingItem(uniqueItemId);
 
             if (item != null)
                 item.Owner = owner;
@@ -189,18 +191,19 @@ namespace OpenTerrariaClient.Client
         internal void ItemAddOrUpdate(WorldItem item)
             => _items.AddOrUpdate(item.UniqueId, item, (oldkey, oldval) => item);
 
-        internal void RemoveItem(short id)
+        internal void RemoveItem(short uniqueItemId)
         {
             WorldItem ignored;
-            _items.TryRemove(id, out ignored);
+            _items.TryRemove(uniqueItemId, out ignored);
         }
 
-        public WorldItem GetExistingItem(short id)
+        public WorldItem GetExistingItem(short uniqueItemId)
         {
-            if(!Config.TrackItemData) throw new InvalidOperationException("Cannot get item data when item data tracking is disabled.");
+            if(!Config.TrackItemData)
+                throw new InvalidOperationException("Cannot get item data when item data tracking is disabled.");
 
             WorldItem retval;
-            _items.TryGetValue(id, out retval);
+            _items.TryGetValue(uniqueItemId, out retval);
             return retval;
         }
         #endregion
@@ -210,20 +213,21 @@ namespace OpenTerrariaClient.Client
         internal void NpcAddOrUpdate(Npc npc)
            => _npcs.AddOrUpdate(npc.UniqueId, npc, (oldkey, oldval) => npc);
 
-        internal void RemoveNpc(short id)
+        internal void RemoveNpc(short uniqueNpcId)
         {
             Npc ignored;
-            _npcs.TryRemove(id, out ignored);
+            _npcs.TryRemove(uniqueNpcId, out ignored);
         }
 
-        public Npc GetExistingNpc(short id)
+        public Npc GetExistingNpc(short uniqueNpcId)
         {
-            if (!Config.TrackProjectileData) throw new InvalidOperationException("Cannot get npc data when npc data tracking is disabled.");
+            if (!Config.TrackProjectileData)
+                throw new InvalidOperationException("Cannot get npc data when npc data tracking is disabled.");
 
-            if (!_npcs.ContainsKey(id)) return null;
+            if (!_npcs.ContainsKey(uniqueNpcId)) return null;
 
             Npc retval;
-            _npcs.TryGetValue(id, out retval);
+            _npcs.TryGetValue(uniqueNpcId, out retval);
             return retval;
         }
 
@@ -234,18 +238,19 @@ namespace OpenTerrariaClient.Client
         internal void ProjectileAddOrUpdate(WorldProjectile proj)
             => _projectiles.AddOrUpdate(proj.UniqueId, proj, (oldkey, oldval) => proj);
 
-        internal void RemoveProjectile(short uniqueId)
+        internal void RemoveProjectile(short uniqueProjectileId)
         {
             WorldProjectile ignored;
-            _projectiles.TryGetValue(uniqueId, out ignored);
+            _projectiles.TryGetValue(uniqueProjectileId, out ignored);
         }
 
-        public WorldProjectile GetExistingProjectile(short uniqueId)
+        public WorldProjectile GetExistingProjectile(short uniqueProjectileId)
         {
-            if(!Config.TrackProjectileData) throw new InvalidOperationException("Cannot get projectile data when projectile data tracking is disabled.");
+            if(!Config.TrackProjectileData)
+                throw new InvalidOperationException("Cannot get projectile data when projectile data tracking is disabled.");
 
             WorldProjectile retval;
-            _projectiles.TryGetValue(uniqueId, out retval);
+            _projectiles.TryGetValue(uniqueProjectileId, out retval);
             return retval;
         }
 
