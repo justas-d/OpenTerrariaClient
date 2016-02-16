@@ -15,7 +15,7 @@ Tshock support has not been tested and is not planned.
 # Usage
 We have no docs at the moment. Refer to these implementations instead:
 https://github.com/SSStormy/TerrariaBridgeTests/blob/master/Program.cs
-https://github.com/SSStormy/Stormbot/blob/master/Bot.Core/Modules/TerrariaModule.cs
+https://github.com/SSStormy/Stormbot/blob/master/Bot.Core/Modules/Relay/TerrariaRelayModule.cs
 
 # Big thanks
 Without some public resources and people this wouldn't have been possible.
