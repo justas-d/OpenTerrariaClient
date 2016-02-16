@@ -221,7 +221,7 @@ namespace OpenTerrariaClient.Client
 
         public Npc GetExistingNpc(short uniqueNpcId)
         {
-            if (!Config.TrackProjectileData)
+            if (!Config.TrackNpcData)
                 throw new InvalidOperationException("Cannot get npc data when npc data tracking is disabled.");
 
             if (!_npcs.ContainsKey(uniqueNpcId)) return null;
