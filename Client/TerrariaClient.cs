@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTerrariaClient.Client.Service;
 using OpenTerrariaClient.Model;
 using OpenTerrariaClient.Model.ID;
@@ -22,11 +23,11 @@ namespace OpenTerrariaClient.Client
         private readonly ConcurrentDictionary<short, WorldProjectile> _projectiles = new ConcurrentDictionary<short, WorldProjectile>();
 
         private const int BufferSize = 0x1FFFE;
-        private MemoryStream _packetStream = new MemoryStream();
+        private readonly MemoryStream _packetStream = new MemoryStream();
         private BinaryReader _packetReader;
 
-        public const byte ServerPlayerId = byte.MaxValue;
-        private Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) {PlayerId = ServerPlayerId};
+        private const byte ServerPlayerId = byte.MaxValue;
+        private static Player ServerDummyPlayer => new Player(new PlayerAppearance("Server")) {PlayerId = ServerPlayerId};
 
         public LogManager Log { get; } = new LogManager();
         ///<summary>Returns the configuration data used for this client.</summary>
@@ -76,33 +77,36 @@ namespace OpenTerrariaClient.Client
             Services.Add<InternalPacketManagerService>();
         }
 
-        public void Connect(string host, int port)
+        public Task Connect(string host, int port)
         {
-            if (_socket.Connected) throw new ArgumentException("You are already connected to a server.");
-
-            _disconnectEvent.Reset();
-
-            ManualResetEvent connectDone = new ManualResetEvent(false);
-
-            _socket.BeginConnect(host, port, (ar) =>
+            return Task.Run(() =>
             {
-                try
+                if (_socket.Connected) throw new ArgumentException("You are already connected to a server.");
+
+                _disconnectEvent.Reset();
+
+                ManualResetEvent connectDone = new ManualResetEvent(false);
+
+                _socket.BeginConnect(host, port, (ar) =>
                 {
-                    _socket.EndConnect(ar);
-                    connectDone.Set();
-                }
-                catch (Exception ex)
-                {
-                    Log.Critical($"Couldn't connect to {host}:{port}. {ex}");
-                }
-            }, null);
+                    try
+                    {
+                        _socket.EndConnect(ar);
+                        connectDone.Set();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Critical($"Couldn't connect to {host}:{port}. {ex}");
+                    }
+                }, null);
 
-            connectDone.WaitOne(Config.TimeoutMs);
+                connectDone.WaitOne(Config.TimeoutMs);
 
-            if (!_socket.Connected) throw new ArgumentException($"Failed connecting to {host}:{port}");
-            OnConnected();
+                if (!_socket.Connected) throw new ArgumentException($"Failed connecting to {host}:{port}");
+                OnConnected();
 
-            BeginReceive();
+                BeginReceive();
+            });
         }
 
         public void Login()

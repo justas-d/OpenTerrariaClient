@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using OpenTerrariaClient.Client;
 using OpenTerrariaClient.Client.Service;
 using OpenTerrariaClient.Model;
@@ -31,9 +32,9 @@ namespace OpenTerrariaClient
         public static void Send(this TerrariaClient client, TerrPacketType type, string payload)
             => client.Send(TerrPacket.Create(type, payload));
 
-        public static void ConnectAndLogin(this TerrariaClient client, string host, int port)
+        public static async Task ConnectAndLogin(this TerrariaClient client, string host, int port)
         {
-            client.Connect(host, port);
+            await client.Connect(host, port);
             client.Login();
         }
 

@@ -163,7 +163,7 @@ namespace OpenTerrariaClient.Model
 
         public bool IsCloudBgActive { get; internal set; }
 
-        public Dictionary<short, int> NpcKillCount { get; internal set; } = new Dictionary<short, int>();
+        public Dictionary<short, int> NpcKillCount { get; } = new Dictionary<short, int>();
 
         internal WorldInfo() { }
 
@@ -182,8 +182,7 @@ namespace OpenTerrariaClient.Model
 
         protected override void ReadPayload(PayloadReader reader, TerrPacketType type)
         {
-            if (type != TerrPacketType.WorldInformation)
-                throw new ArgumentException($"{nameof(type)} is not {TerrPacketType.WorldInformation}");
+            CheckForValidType(type, TerrPacketType.WorldInformation);
 
             int tempTime = reader.ReadInt32(); // store this value so we have the correct IsDay when evalutaing real time.
 
