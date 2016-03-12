@@ -10,7 +10,6 @@ Tshock support has not been tested and is not planned.
 # Prerequisites
 * .Net 4.5.2
 * C#6
-* StrmyCore (https://github.com/SSStormy/StrmyCore)
 
 # Usage
 We have no docs at the moment. Refer to these implementations instead:
