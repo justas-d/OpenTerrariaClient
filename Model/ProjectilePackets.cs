@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using OpenTerrariaClient.Packet;
-using StrmyCore;
+
 
 namespace OpenTerrariaClient.Model
 {

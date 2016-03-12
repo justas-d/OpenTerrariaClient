@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using OpenTerrariaClient.Packet;
-using StrmyCore;
 
 namespace OpenTerrariaClient.Model
 {

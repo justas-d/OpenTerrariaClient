@@ -84,8 +84,6 @@ namespace OpenTerrariaClient.Model
 
     public class ValPair<T> : PacketWrapper where T : struct
     {
-        private static readonly int TSize = Marshal.SizeOf(typeof(T));
-
         private T _val1;
         private T _val2;
 

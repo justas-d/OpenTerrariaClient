@@ -49,6 +49,18 @@ namespace OpenTerrariaClient.Model
         }
     }
 
+    public enum MoonPhaseType
+    {
+        FullMoon = 0,
+        WaningGibbous = 1,
+        ThirdQuarter = 2,
+        WaningCrescen = 3,
+        NewMoon = 4,
+        WaxingCrescent = 5,
+        FirstQuarter = 6,
+        WaxingGibbous = 7
+    }
+
     public sealed class WorldInfo : PacketWrapper
     {
         private int _time;
@@ -80,7 +92,7 @@ namespace OpenTerrariaClient.Model
         public TimeSpan Time { get; private set; }
 
         internal byte DayMoonInfo { get; private set; }
-        public byte MoonPhase { get; private set; }
+        public MoonPhaseType MoonPhase { get; private set; }
         public short MaxTilesX { get; private set; }
         public short MaxTilesY { get; private set; }
         public short SpawnX { get; private set; }
@@ -194,7 +206,7 @@ namespace OpenTerrariaClient.Model
 
             RawTime = tempTime;
 
-            MoonPhase = reader.ReadByte();
+            MoonPhase = (MoonPhaseType) reader.ReadByte();
             MaxTilesX = reader.ReadInt16();
             MaxTilesY = reader.ReadInt16();
             SpawnX = reader.ReadInt16();
