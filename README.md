@@ -1,3 +1,6 @@
+# Migrated to GitLab
+###### https://gitlab.com/SSStormy/OpenTerrariaClient
+```
 # OpenTerraria
 A small library aimed at recreating a Terraria client.
 
@@ -24,3 +27,4 @@ Thanks to:
 * Voltana (RogueException), for introducing me to various design patterns I've never seen
 * destruc7i0n, for inspiring me to make this in the first place
 * X-tis and Rebbit for testing.
+```
