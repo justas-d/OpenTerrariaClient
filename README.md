@@ -1,5 +1,5 @@
-# Migrated to GitLab
-###### https://gitlab.com/SSStormy/OpenTerrariaClient
+Deprecated library. However, there is interest in rewriting and doing it properly.
+Stored for archival purposes.
 ```
 # OpenTerraria
 A small library aimed at recreating a Terraria client.
